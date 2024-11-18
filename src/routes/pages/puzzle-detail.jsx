@@ -1,17 +1,14 @@
-import { useParams } from "react-router-dom";
-// import PuzzleCanvas from "../components/PuzzleCanvas";
-// import PuzzleInfo from "../components/PuzzleInfo";
+import PuzzleCanvas from "../../components/PuzzleCanvas";
 
 export default function PuzzleDetail() {
-  const { puzzleId } = useParams();
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-2">
-        {/* <PuzzleCanvas puzzleId={puzzleId} /> */}
+        <PuzzleCanvas />
       </div>
       <div>
-        {/* <PuzzleInfo puzzleId={puzzleId} /> */}
+        <h2>Puzzle Info</h2>
+        <p>This is where puzzle-related info will go!</p>
       </div>
     </div>
   );

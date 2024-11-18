@@ -19,11 +19,11 @@ export default function PuzzleCard({ puzzle }) {
       className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
     >
       <div className="aspect-w-16 aspect-h-9">
-        <img 
+        {/* <img 
           src={thumbnailUrl} 
           alt={title}
           className="w-full h-full object-cover"
-        />
+        /> */}
       </div>
       <div className="p-4">
         <div className="flex items-center justify-between mb-2">
@@ -54,11 +54,11 @@ export default function PuzzleCard({ puzzle }) {
           ))}
         </div>
         <div className="flex items-center text-sm text-gray-500">
-          <img 
+          {/* <img 
             src={author.avatarUrl} 
             alt={author.name}
             className="h-6 w-6 rounded-full"
-          />
+          /> */}
           <span className="ml-2">{author.name}</span>
         </div>
       </div>
