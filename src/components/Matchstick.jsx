@@ -10,6 +10,10 @@ export default function Matchstick({ stick, image, isSelected, onSelect, onDragE
       rotation={stick.angle}
       width={18}
       height={150}
+      offset={{
+        x: 9, // 이미지 폭의 절반
+        y: 75, // 이미지 높이의 절반
+      }}
       image={image}
       draggable
       onTap={() => onSelect(stick.id)} // 모바일 지원

@@ -12,12 +12,18 @@ export default function PuzzleCanvas() {
   ]);
 
   const [selectedMatchstick, setSelectedMatchstick] = useState(null)
-  // const [history, setHistory] = useState([]) // 상태 기록
-  // const [currentStep, setCurrentStep]
+  const [history, setHistory] = useState([]) // 상태 기록
+  const [currentStep, setCurrentStep] = useState(-1) // 현재 상태
 
   const imageRef = useRef(null);
   const transformerRef = useRef(null);
   const stageRef = useRef(null);
+
+  // 초기 상태 관리
+  useEffect(() => {
+    setHistory([matchsticks])
+    setCurrentStep(0)
+  }, [])
 
   // 이미지 로드
   useEffect(() => {
@@ -52,7 +58,13 @@ export default function PuzzleCanvas() {
 
   const handleDragEnd = (e, id) => {
     // 드래그 완료 후 위치 업데이트
-    const newPosition = { x: e.target.x(), y: e.target.y() }
+
+    // 정수로 반올림
+    const x = Math.round(e.target.x())
+    const y = Math.round(e.target.y())
+
+    const newPosition = { x, y }
+    const findOne = matchsticks.find((stick) =>  stick.id === id)
 
     setMatchsticks((prev) =>
       prev.map((stick) =>
@@ -60,13 +72,17 @@ export default function PuzzleCanvas() {
       )
     )
     // 상태 저장
-    saveState()
+    
+    const before = {x: findOne.x, y: findOne.y }
+    const after = { x, y }
+    saveState("move", id, before, after)
   }
 
   const handleRotateEnd = (newAngle, id) => {
     // 정수로 반올림
     const roundedAngle = Math.round(newAngle)
-    
+    const findOne = matchsticks.find((stick) =>  stick.id === id)
+
     // 회전 완료 후 각도 업데이트
     setMatchsticks((prev) =>
       prev.map((stick) => 
@@ -74,14 +90,37 @@ export default function PuzzleCanvas() {
       )
     )
     // 상태 저장
-    saveState()
+    const before = {angle: findOne.angle}
+    const after = {angle: newAngle}
+    saveState("rotate", id, before, after)
   }
 
-  const saveState = () => {
+  const saveState = (type, id, before, after) => {
+    const newHistory = history.slice(0, currentStep + 1) // 현재 상태 이후의 기록 삭제
+    newHistory.push({ type, id, before, after}) // 새로운 상태 저장
+    setHistory(newHistory)
+    setCurrentStep(newHistory.length - 1) // 현재 상태를 마지막으로 이동
+    console.log(history)
+  }
+
+  const undo = () => {
+    if (currentStep >=0) {
+      const { type, id, before } = history[currentStep]
+
+      setMatchsticks((prev) =>
+        prev.map((stick) =>
+          stick.id === id ? {...stick , ...before} : stick
+        )
+      )
+      setCurrentStep(currentStep - 1); // 이전 단계로 이동
+    }
+  }
+  const redo = () => {
 
   }
 
   const handleBackgroundClick = (e) => {
+    // 선택한 target이 Stage 일때만 선택 해제
     if (e.target === e.target.getStage()) {
       setSelectedMatchstick(null)
     }
@@ -89,6 +128,10 @@ export default function PuzzleCanvas() {
 
   return (
     <>
+    <div>
+      <button onClick={undo} disabled={currentStep <= 0}>Undo</button>
+      <button onClick={redo} disabled={currentStep >= history.length - 1}>Redo</button>
+    </div>
     <Stage
       ref={stageRef}
       width={window.innerWidth}
