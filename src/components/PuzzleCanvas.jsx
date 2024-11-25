@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react"
-import { Stage, Layer, Image, Transformer } from "react-konva"
+import { Stage, Layer, Transformer } from "react-konva"
 import Matchstick from "./Matchstick";
 
 export default function PuzzleCanvas() {
@@ -100,12 +100,11 @@ export default function PuzzleCanvas() {
     newHistory.push({ type, id, before, after}) // 새로운 상태 저장
     setHistory(newHistory)
     setCurrentStep(newHistory.length - 1) // 현재 상태를 마지막으로 이동
-    console.log(history)
   }
 
   const undo = () => {
     if (currentStep >=0) {
-      const { type, id, before } = history[currentStep]
+      const { id, before } = history[currentStep]
 
       setMatchsticks((prev) =>
         prev.map((stick) =>
@@ -113,10 +112,37 @@ export default function PuzzleCanvas() {
         )
       )
       setCurrentStep(currentStep - 1); // 이전 단계로 이동
+      console.log(matchsticks)
     }
   }
   const redo = () => {
+    if (currentStep < history.length - 1) {
+      const { id, after } = history[currentStep + 1]
 
+      setMatchsticks((prev) =>
+        prev.map((stick) =>
+          stick.id === id ? {...stick, ...after} : stick
+        )
+      )
+      setCurrentStep(currentStep + 1)
+    }
+  }
+
+  const remove = () => {
+    if (selectedMatchstick) {
+      const select = matchsticks.find((stick) => stick.id === selectedMatchstick)
+      console.log('이전: ',select)
+      setMatchsticks((prev) =>
+        prev.map((stick) =>
+          stick.id === selectedMatchstick ? {...stick, isDeleted: true} : stick
+        )
+      )
+      console.log('이후: ',select)
+      setSelectedMatchstick(null)
+      const before = {...select, isDeleted: false}
+      const after = { ...select, isDeleted: true}
+      saveState("remove", selectedMatchstick, before, after)
+    }
   }
 
   const handleBackgroundClick = (e) => {
@@ -128,9 +154,10 @@ export default function PuzzleCanvas() {
 
   return (
     <>
-    <div>
-      <button onClick={undo} disabled={currentStep <= 0}>Undo</button>
-      <button onClick={redo} disabled={currentStep >= history.length - 1}>Redo</button>
+    <div className="flex flex-row gap-2 absolute z-10">
+      <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={undo} disabled={currentStep <= 0}>Undo</button>
+      <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={redo} disabled={currentStep >= history.length - 1}>Redo</button>
+      <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={remove} disabled={selectedMatchstick == null} >Remove</button>
     </div>
     <Stage
       ref={stageRef}
@@ -140,7 +167,9 @@ export default function PuzzleCanvas() {
       onTap={handleBackgroundClick}
     >
       <Layer>
-        {matchsticks.map((stick) => (
+        {matchsticks
+          .filter((stick) => !stick.isDeleted)
+          .map((stick) => (
           <Matchstick
             key={stick.id}
             stick={stick}
