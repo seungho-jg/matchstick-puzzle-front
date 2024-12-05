@@ -91,8 +91,7 @@ export default function PuzzleCanvas() {
     const newPosition = { x, y }
 
     const findOne = matchsticks.find((stick) =>  stick.id === id)
-    const before = {x: findOne.x, y: findOne.y }
-
+    
     const currentMoveCount = Object.keys(moveCounts).length;
     // 이동 제한 확인
     if (currentMoveCount >= limit) {
@@ -108,6 +107,7 @@ export default function PuzzleCanvas() {
         stick.id === id ? { ...stick, ...newPosition } : stick
       )
     )
+    const before = {x: findOne.x, y: findOne.y }
     const after = { x, y }
     
     saveState("move", id, before, after)
@@ -117,11 +117,10 @@ export default function PuzzleCanvas() {
     // 정수로 반올림
     const roundedAngle = Math.round(newAngle)
     const findOne = matchsticks.find((stick) =>  stick.id === id)
-    const before = {angle: findOne.angle}
-
+    
     const currentMoveCount = Object.keys(moveCounts).length;
     // 이동 제한 확인
-
+    
     if (currentMoveCount >= limit) {
       if (!moveCounts[id]){
         alert('이동 제한에 도달했습니다.')
@@ -136,6 +135,7 @@ export default function PuzzleCanvas() {
       )
     )
     // 상태 저장
+    const before = {angle: findOne.angle}
     const after = {angle: newAngle}
     saveState("rotate", id, before, after)
   }
@@ -166,7 +166,7 @@ export default function PuzzleCanvas() {
 
     setMatchsticks((prev) =>
       prev.map((stick) =>
-        stick.id === id ? {id, x: findOne.x, y: findOne.y, angle: findOne.angle } : stick
+        stick.id === id ? {...findOne} : stick
       )
     )
   }
@@ -220,7 +220,7 @@ export default function PuzzleCanvas() {
     setMoveCounts({})
   }
 
-  const remove = () => {
+  const handleRemove = () => {
     if (gameType !== "remove") {
       alert("삭제할 수 없습니다.")
       return
@@ -258,7 +258,7 @@ export default function PuzzleCanvas() {
     <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={reset} disabled={currentStep < 0}>⏮️</button>
       <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={undo} disabled={currentStep < 0}>◀️</button>
       <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={redo} disabled={currentStep >= history.length - 1}>▶️</button>
-      {gameType !== "move" ? <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={remove} disabled={selectedMatchstick == null} >Remove</button> : null}
+      {gameType !== "move" ? <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={handleRemove} disabled={selectedMatchstick == null} >Remove</button> : null}
       <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={null} disabled={Object.keys(moveCounts).length !== limit}>✅</button>
       <div>남은 횟수 : {limit - Object.keys(moveCounts).length}</div>
     </div>
