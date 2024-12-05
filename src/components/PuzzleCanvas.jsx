@@ -37,11 +37,6 @@ export default function PuzzleCanvas() {
     loadGameData()
   }, [])
 
-  useEffect(() => {
-    // `history` 또는 `currentStep` 변경 시 버튼 상태 업데이트
-    console.log("History or currentStep updated:", history, currentStep);
-  }, [history, currentStep]);
-
   // 이미지 로드
   useEffect(() => {
     const img = new window.Image()
@@ -51,6 +46,17 @@ export default function PuzzleCanvas() {
       setMatchsticks((sticks) => [...sticks])
     };
   }, []);
+
+  useEffect(() => {
+    matchsticks.forEach((stick) => {
+      const node = stageRef.current.findOne(`#${stick.id}`);
+      if (node) {
+        node.position({ x: stick.x, y: stick.y }) // React 상태에 따라 노드 위치 설정
+        node.rotation(stick.angle);
+      }
+    });
+    stageRef.current.batchDraw(); // 전체 레이어 갱신
+  }, [matchsticks]);
 
   // Transformer 업데이트
   useEffect(() => {
@@ -79,26 +85,31 @@ export default function PuzzleCanvas() {
       alert("현재 상태에서는 이동이 불가능합니다.");
       return;
     }
-    // 드래그 완료 후 위치 업데이트
-    if (gameType !== "move" || Object.keys(moveCounts).length >= limit) {
-      alert("이동 제한을 초과했습니다.");
-      return;
-    }
     // 정수로 반올림
     const x = Math.round(e.target.x())
     const y = Math.round(e.target.y())
-
     const newPosition = { x, y }
-    const findOne = matchsticks.find((stick) =>  stick.id === id)
 
+    const findOne = matchsticks.find((stick) =>  stick.id === id)
+    const before = {x: findOne.x, y: findOne.y }
+
+    const currentMoveCount = Object.keys(moveCounts).length;
+    // 이동 제한 확인
+    if (currentMoveCount >= limit) {
+      if (!moveCounts[id]){
+        alert('이동 제한에 도달했습니다.')
+        restorePreviousPosition(id)
+        return;
+      }
+    }
+    // 상태 업데이트
     setMatchsticks((prev) =>
       prev.map((stick) =>
         stick.id === id ? { ...stick, ...newPosition } : stick
       )
     )
-    // 상태 저장
-    const before = {x: findOne.x, y: findOne.y }
     const after = { x, y }
+    
     saveState("move", id, before, after)
   }
 
@@ -106,7 +117,18 @@ export default function PuzzleCanvas() {
     // 정수로 반올림
     const roundedAngle = Math.round(newAngle)
     const findOne = matchsticks.find((stick) =>  stick.id === id)
+    const before = {angle: findOne.angle}
 
+    const currentMoveCount = Object.keys(moveCounts).length;
+    // 이동 제한 확인
+
+    if (currentMoveCount >= limit) {
+      if (!moveCounts[id]){
+        alert('이동 제한에 도달했습니다.')
+        restorePreviousPosition(id)
+        return;
+      }
+    }
     // 회전 완료 후 각도 업데이트
     setMatchsticks((prev) =>
       prev.map((stick) => 
@@ -114,23 +136,39 @@ export default function PuzzleCanvas() {
       )
     )
     // 상태 저장
-    const before = {angle: findOne.angle}
     const after = {angle: newAngle}
     saveState("rotate", id, before, after)
   }
 
   const saveState = (type, id, before, after) => {
     const newHistory = history.slice(0, currentStep + 1) // 현재 상태 이후의 기록 삭제
-    newHistory.push({ type, id, before, after}) // 새로운 상태 저장
+    newHistory.push({
+      type,
+      id,
+      before, 
+      after,
+    }) // 새로운 상태 저장
 
     // 이동 카운트 업데이트
-    setMoveCounts((prev) => ({
-      ...prev,
-      [id]: (prev[id] || 0) + 1,
-    }))
+    const updatedMoveCounts = {
+      ...moveCounts,
+      [id]: (moveCounts[id] || 0) + 1,
+    };
 
+    setMoveCounts(updatedMoveCounts);
     setHistory(newHistory)
     setCurrentStep(newHistory.length - 1) // 현재 상태를 마지막으로 이동
+  }
+
+  // 상태 복원 함수
+  const restorePreviousPosition = (id) => {
+    const findOne =  gameData.initialState.find((stick) =>  stick.id === id)
+
+    setMatchsticks((prev) =>
+      prev.map((stick) =>
+        stick.id === id ? {id, x: findOne.x, y: findOne.y, angle: findOne.angle } : stick
+      )
+    )
   }
 
   const undo = () => {
@@ -201,8 +239,8 @@ export default function PuzzleCanvas() {
       )
       console.log('이후: ',select)
       setSelectedMatchstick(null)
-      const before = {...select, isDeleted: false}
-      const after = { ...select, isDeleted: true}
+      const before = { ...select, isDeleted: false }
+      const after = { ...select, isDeleted: true }
       saveState("remove", selectedMatchstick, before, after)
     }
   }
@@ -217,11 +255,11 @@ export default function PuzzleCanvas() {
   return (
     <>
     <div className="flex flex-row gap-2 absolute z-10">
-    <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={reset} disabled={currentStep == -1}>Reset</button>
-      <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={undo} disabled={currentStep == -1}>Undo</button>
-      <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={redo} disabled={currentStep >= history.length - 1}>Redo</button>
+    <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={reset} disabled={currentStep < 0}>⏮️</button>
+      <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={undo} disabled={currentStep < 0}>◀️</button>
+      <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={redo} disabled={currentStep >= history.length - 1}>▶️</button>
       {gameType !== "move" ? <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={remove} disabled={selectedMatchstick == null} >Remove</button> : null}
-      {/* <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={null} disabled={currentStep === 0}>check</button> */}
+      <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={null} disabled={Object.keys(moveCounts).length !== limit}>✅</button>
       <div>남은 횟수 : {limit - Object.keys(moveCounts).length}</div>
     </div>
     <Stage
