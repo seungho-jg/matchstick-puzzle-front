@@ -1,6 +1,8 @@
-import { useRef, useEffect, useState } from "react"
-import { Stage, Layer, Transformer } from "react-konva"
-import Matchstick from "./Matchstick";
+import { useRef, useEffect, useState, Fragment } from "react"
+import { Stage, Layer, Transformer, Text } from "react-konva"
+import Matchstick from "./Matchstick"
+import { normalizeAngle } from "../utils/calculator"
+import ResultModal from "./ResultModal"
 
 export default function PuzzleCanvas() {
   // 게임 초기 데이터
@@ -14,6 +16,10 @@ export default function PuzzleCanvas() {
   const [history, setHistory] = useState([]) // 상태 기록
   const [currentStep, setCurrentStep] = useState(-1) // 현재 상태
   const [moveCounts, setMoveCounts] = useState({})
+
+  // 모달창
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState({});
 
   const imageRef = useRef(null);
   const transformerRef = useRef(null);
@@ -46,17 +52,6 @@ export default function PuzzleCanvas() {
       setMatchsticks((sticks) => [...sticks])
     };
   }, []);
-
-  useEffect(() => {
-    matchsticks.forEach((stick) => {
-      const node = stageRef.current.findOne(`#${stick.id}`);
-      if (node) {
-        node.position({ x: stick.x, y: stick.y }) // React 상태에 따라 노드 위치 설정
-        node.rotation(stick.angle);
-      }
-    });
-    stageRef.current.batchDraw(); // 전체 레이어 갱신
-  }, [matchsticks]);
 
   // Transformer 업데이트
   useEffect(() => {
@@ -120,7 +115,6 @@ export default function PuzzleCanvas() {
     
     const currentMoveCount = Object.keys(moveCounts).length;
     // 이동 제한 확인
-    
     if (currentMoveCount >= limit) {
       if (!moveCounts[id]){
         alert('이동 제한에 도달했습니다.')
@@ -169,6 +163,12 @@ export default function PuzzleCanvas() {
         stick.id === id ? {...findOne} : stick
       )
     )
+    const node = stageRef.current.findOne(`#${id}`);
+    if (node) {
+      node.position({ x: findOne.x, y: findOne.y }); // React 상태를 Konva 노드에 반영
+      node.rotation(findOne.angle);
+      node.getLayer().batchDraw(); // 화면 강제 갱신
+    }
   }
 
   const undo = () => {
@@ -231,13 +231,13 @@ export default function PuzzleCanvas() {
     }
     if (selectedMatchstick) {
       const select = matchsticks.find((stick) => stick.id === selectedMatchstick)
-      console.log('이전: ',select)
+      // console.log('이전: ',select)
       setMatchsticks((prev) =>
         prev.map((stick) =>
           stick.id === selectedMatchstick ? {...stick, isDeleted: true} : stick
         )
       )
-      console.log('이후: ',select)
+      // console.log('이후: ',select)
       setSelectedMatchstick(null)
       const before = { ...select, isDeleted: false }
       const after = { ...select, isDeleted: true }
@@ -251,7 +251,77 @@ export default function PuzzleCanvas() {
       setSelectedMatchstick(null)
     }
   }
+  const handleCheckAnswer = () => {
+    const { solution } = gameData
+    let isCorrect = false;
+    
+    if (gameType === "move") {
+      isCorrect = checkMoveSimilarity(matchsticks, solution, 10)
+    } else if (gameType === "remove") {
+      isCorrect = checkRemoveSimilarity(moveCounts, solution)
+    }
+    if (isCorrect) {
+      setModalContent({
+        message: "정답입니다!",
+        buttons: [
+          { label: "확인", onClick: () => setIsModalOpen(false) }
+        ],
+      });
+    } else {
+      setModalContent({
+        message: "오답입니다.",
+        buttons: [
+          { label: "확인", onClick: () => setIsModalOpen(false) }
+        ],
+      });
+    }
+    setIsModalOpen(true)
+  }
+  function toRelativeCoordinates(sticks) {
+    // 전체 중심 좌표 계산
+    const centerX = sticks.reduce((sum, stick) => sum + stick.x, 0) / sticks.length
+    const centerY = sticks.reduce((sum, stick) => sum + stick.y, 0) / sticks.length
 
+    // 각 성냥개비의 상대 좌표 계산
+    return sticks.map((stick) => ({
+      id: stick.id,
+      relativeX: Math.round(stick.x - centerX),
+      relativeY: Math.round(stick.y - centerY),
+      angle: Math.abs(stick.angle)
+    }))
+  }
+
+  const checkRemoveSimilarity = (moveCounts, solution) => {
+    // 이동 횟수 확인
+    if (Object.keys(moveCounts).length !== limit) return false
+
+    // 삭제된 성냥개비의 id 가져오기
+    const removeIds = Object.keys(moveCounts);
+    
+    // 삭제된 성냥이 solution과 정확히 일치하는지 확인
+    return !solution.some(stick => {
+      return removeIds.includes(stick.id)
+    })
+  }
+
+  const checkMoveSimilarity = (currentState, solution, threshold = 30) => {
+    // 상대 좌표로 변환
+    const relativeCurrent = toRelativeCoordinates(currentState);
+    const relativeSolution = toRelativeCoordinates(solution);
+
+    if (relativeCurrent.length !== relativeSolution.length) return false
+
+    return relativeCurrent.every((currentStick) => {
+      return relativeSolution.some((solutionStick) => {
+        const positionMatch =
+        Math.abs(currentStick.relativeX - solutionStick.relativeX) <= threshold &&
+        Math.abs(currentStick.relativeY - solutionStick.relativeY) <= threshold;
+        const angleMatch =
+          normalizeAngle(currentStick.angle) - normalizeAngle(solutionStick.angle) < threshold
+        return positionMatch && angleMatch
+      })
+    })
+  }
   return (
     <>
     <div className="flex flex-row gap-2 absolute z-10">
@@ -259,9 +329,17 @@ export default function PuzzleCanvas() {
       <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={undo} disabled={currentStep < 0}>◀️</button>
       <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={redo} disabled={currentStep >= history.length - 1}>▶️</button>
       {gameType !== "move" ? <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={handleRemove} disabled={selectedMatchstick == null} >Remove</button> : null}
-      <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={null} disabled={Object.keys(moveCounts).length !== limit}>✅</button>
+      <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={handleCheckAnswer} disabled={Object.keys(moveCounts).length !== limit}>✅</button>
       <div>남은 횟수 : {limit - Object.keys(moveCounts).length}</div>
     </div>
+    <div className="text-center pt-10">{gameData?.title}</div>
+    {isModalOpen && (
+        <ResultModal
+          message={modalContent.message}
+          buttons={modalContent.buttons}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     <Stage
       ref={stageRef}
       width={window.innerWidth}
@@ -273,16 +351,27 @@ export default function PuzzleCanvas() {
         {matchsticks
           .filter((stick) => !stick.isDeleted)
           .map((stick) => (
-          <Matchstick
-            key={stick.id}
-            stick={stick}
-            image={imageRef.current}
-            isSelected={stick.id === selectedMatchstick}
-            onSelect={handleSelect}
-            onDragEnd={handleDragEnd}
-            onTransformEnd={handleRotateEnd}
-            canMove={gameType === "move"}
-          />
+            <Fragment key={stick.id}>
+              <Matchstick
+                key={stick.id}
+                stick={stick}
+                image={imageRef.current}
+                isSelected={stick.id === selectedMatchstick}
+                onSelect={handleSelect}
+                onDragEnd={handleDragEnd}
+                onTransformEnd={handleRotateEnd}
+                canMove={gameType === "move"}
+              />
+              {/* 성냥개비 위에 id를 표시 */}
+              <Text
+                x={stick.x} // Rect의 중심 위에 배치
+                y={stick.y } // Rect의 위쪽에 배치
+                text={stick.id}
+                fontSize={14}
+                fill="black"
+                align="center"
+              />
+            </Fragment>
         ))}
         {/* Transformer */}
         <Transformer
