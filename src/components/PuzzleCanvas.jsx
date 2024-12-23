@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, Fragment } from "react"
-import { Stage, Layer, Transformer, Text } from "react-konva"
+import { Stage, Layer, Transformer, Text, Rect } from "react-konva"
 import Matchstick from "./Matchstick"
 import { normalizeAngle } from "../utils/calculator"
 import ResultModal from "./ResultModal"
@@ -324,7 +324,7 @@ export default function PuzzleCanvas({ puzzleData }) {
   }
   return (
     <>
-    <div className="flex flex-row gap-2 absolute z-10">
+    <div className="flex flex-row gap-2 absolute z-10 ">
     <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={reset} disabled={currentStep < 0}>⏮️</button>
       <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={undo} disabled={currentStep < 0}>◀️</button>
       <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={redo} disabled={currentStep >= history.length - 1}>▶️</button>
@@ -343,11 +343,21 @@ export default function PuzzleCanvas({ puzzleData }) {
     <Stage
       ref={stageRef}
       width={window.innerWidth}
-      height={window.innerHeight}
+      height={window.innerHeight * 0.7}
       onClick={handleBackgroundClick}
       onTap={handleBackgroundClick}
+      className="bg-stone-200 rounded-2xl"
     >
       <Layer>
+        {/* <Rect
+          x={0}
+          y={0}
+          width={window.innerWidth}
+          height={window.innerHeight * 0.5}
+          fill="seagreen" // 배경색
+          cornerRadius={20} // 모서리 라운드 설정
+          listening={false} // 배경 클릭 비활성화
+        /> */}
         {matchsticks
           .filter((stick) => !stick.isDeleted)
           .map((stick) => (
