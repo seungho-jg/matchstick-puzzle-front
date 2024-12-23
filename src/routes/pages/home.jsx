@@ -1,24 +1,27 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import PuzzleCard from '../../components/PuzzleCard'
+import { fetchAllPuzzles } from '../../api/api-puzzle';
 
 export default function Home() {
-  const [puzzles, setPuzzles] = useState([
-    {
-      id: '1',
-      title: '사각형 만들기',
-      description: '4개의 성냥개비로 정사각형을 만드세요',
-      difficulty: 'EASY',
-      thumbnailUrl: '/thumbnails/puzzle1.png',
-      tags: ['기하학', '사각형'],
-      rating: 4.5,
-      totalRatings: 128,
-      author: {
-        name: 'John Doe',
-        avatarUrl: '/avatars/john.jpg'
+  const [puzzles, setPuzzles] = useState([])
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function loadPuzzles() {
+      try {
+        const data = await fetchAllPuzzles()
+        console.log('data: ', data)
+        setPuzzles(data)
+      } catch (error) {
+        setError(error.message)
       }
-    },
-    // ... more puzzles
-  ])
+    }
+    loadPuzzles();
+  }, [])
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

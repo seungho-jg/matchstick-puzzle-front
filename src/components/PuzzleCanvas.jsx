@@ -1,10 +1,12 @@
-import { useRef, useEffect, useState } from "react"
-import { Stage, Layer, Transformer } from "react-konva"
-import Matchstick from "./Matchstick";
+import { useRef, useEffect, useState, Fragment } from "react"
+import { Stage, Layer, Transformer, Text, Rect } from "react-konva"
+import Matchstick from "./Matchstick"
+import { normalizeAngle } from "../utils/calculator"
+import ResultModal from "./ResultModal"
+import { fetchPuzzleById } from "../api/api-puzzle"
 
-export default function PuzzleCanvas() {
+export default function PuzzleCanvas({ puzzleData }) {
   // 게임 초기 데이터
-  const [gameData, setGameData] = useState(null) // JSON 데이터 저장
   const [matchsticks, setMatchsticks] = useState([])
   const [gameType, setGameType] = useState("")
   const [limit, setLimit] = useState(0)
@@ -15,27 +17,25 @@ export default function PuzzleCanvas() {
   const [currentStep, setCurrentStep] = useState(-1) // 현재 상태
   const [moveCounts, setMoveCounts] = useState({})
 
+  // 모달창
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState({});
+
   const imageRef = useRef(null);
   const transformerRef = useRef(null);
   const stageRef = useRef(null);
 
   // JSON 데이터 로드
   useEffect(()=>{
-    async function loadGameData() {
-      try{
-        const response = await fetch("/gameData.json")
-        const data = await response.json()
-        setGameData(data)
-        setMatchsticks(data.initialState)
-        setGameType(data.gameType)
-        setLimit(data.limit)
+   function loadGameData() {
+      if(!puzzleData || !puzzleData.id ) return
+        setMatchsticks(JSON.parse(puzzleData?.initialState))
+        setGameType(puzzleData?.gameType)
+        setLimit(+puzzleData?.limit)
         setCurrentStep(-1)
-      } catch (error) {
-        console.error("Failed to load game data: ", error)
-      }
     }
     loadGameData()
-  }, [])
+  }, [puzzleData])
 
   // 이미지 로드
   useEffect(() => {
@@ -46,17 +46,6 @@ export default function PuzzleCanvas() {
       setMatchsticks((sticks) => [...sticks])
     };
   }, []);
-
-  useEffect(() => {
-    matchsticks.forEach((stick) => {
-      const node = stageRef.current.findOne(`#${stick.id}`);
-      if (node) {
-        node.position({ x: stick.x, y: stick.y }) // React 상태에 따라 노드 위치 설정
-        node.rotation(stick.angle);
-      }
-    });
-    stageRef.current.batchDraw(); // 전체 레이어 갱신
-  }, [matchsticks]);
 
   // Transformer 업데이트
   useEffect(() => {
@@ -91,8 +80,7 @@ export default function PuzzleCanvas() {
     const newPosition = { x, y }
 
     const findOne = matchsticks.find((stick) =>  stick.id === id)
-    const before = {x: findOne.x, y: findOne.y }
-
+    
     const currentMoveCount = Object.keys(moveCounts).length;
     // 이동 제한 확인
     if (currentMoveCount >= limit) {
@@ -108,6 +96,7 @@ export default function PuzzleCanvas() {
         stick.id === id ? { ...stick, ...newPosition } : stick
       )
     )
+    const before = {x: findOne.x, y: findOne.y }
     const after = { x, y }
     
     saveState("move", id, before, after)
@@ -117,11 +106,9 @@ export default function PuzzleCanvas() {
     // 정수로 반올림
     const roundedAngle = Math.round(newAngle)
     const findOne = matchsticks.find((stick) =>  stick.id === id)
-    const before = {angle: findOne.angle}
-
+    
     const currentMoveCount = Object.keys(moveCounts).length;
     // 이동 제한 확인
-
     if (currentMoveCount >= limit) {
       if (!moveCounts[id]){
         alert('이동 제한에 도달했습니다.')
@@ -136,6 +123,7 @@ export default function PuzzleCanvas() {
       )
     )
     // 상태 저장
+    const before = {angle: findOne.angle}
     const after = {angle: newAngle}
     saveState("rotate", id, before, after)
   }
@@ -162,13 +150,19 @@ export default function PuzzleCanvas() {
 
   // 상태 복원 함수
   const restorePreviousPosition = (id) => {
-    const findOne =  gameData.initialState.find((stick) =>  stick.id === id)
+    const findOne =  puzzleData.initialState.find((stick) =>  stick.id === id)
 
     setMatchsticks((prev) =>
       prev.map((stick) =>
-        stick.id === id ? {id, x: findOne.x, y: findOne.y, angle: findOne.angle } : stick
+        stick.id === id ? {...findOne} : stick
       )
     )
+    const node = stageRef.current.findOne(`#${id}`);
+    if (node) {
+      node.position({ x: findOne.x, y: findOne.y }); // React 상태를 Konva 노드에 반영
+      node.rotation(findOne.angle);
+      node.getLayer().batchDraw(); // 화면 강제 갱신
+    }
   }
 
   const undo = () => {
@@ -213,14 +207,20 @@ export default function PuzzleCanvas() {
   }
 
   const reset = () => {
-    setHistory([])
-    setCurrentStep(-1)
-    setMatchsticks(gameData.initialState)
-    setSelectedMatchstick(null)
-    setMoveCounts({})
-  }
+    try {
+      const initialState = JSON.parse(puzzleData.initialState);
+      setMatchsticks(initialState);
+    } catch (error) {
+      console.error("Failed to parse initialState during reset:", error);
+      setMatchsticks([]); // 기본값으로 설정
+    }
+    setHistory([]);
+    setCurrentStep(-1);
+    setSelectedMatchstick(null);
+    setMoveCounts({});
+  };
 
-  const remove = () => {
+  const handleRemove = () => {
     if (gameType !== "remove") {
       alert("삭제할 수 없습니다.")
       return
@@ -231,13 +231,13 @@ export default function PuzzleCanvas() {
     }
     if (selectedMatchstick) {
       const select = matchsticks.find((stick) => stick.id === selectedMatchstick)
-      console.log('이전: ',select)
+      // console.log('이전: ',select)
       setMatchsticks((prev) =>
         prev.map((stick) =>
           stick.id === selectedMatchstick ? {...stick, isDeleted: true} : stick
         )
       )
-      console.log('이후: ',select)
+      // console.log('이후: ',select)
       setSelectedMatchstick(null)
       const before = { ...select, isDeleted: false }
       const after = { ...select, isDeleted: true }
@@ -251,38 +251,137 @@ export default function PuzzleCanvas() {
       setSelectedMatchstick(null)
     }
   }
+  const handleCheckAnswer = () => {
+    const  solution  =  JSON.parse(puzzleData.solution)
+    let isCorrect = false;
+    
+    if (gameType === "move") {
+      isCorrect = checkMoveSimilarity(matchsticks, solution, 10)
+    } else if (gameType === "remove") {
+      isCorrect = checkRemoveSimilarity(moveCounts, solution)
+    }
+    if (isCorrect) {
+      setModalContent({
+        message: "정답입니다!",
+        buttons: [
+          { label: "확인", onClick: () => setIsModalOpen(false) }
+        ],
+      });
+    } else {
+      setModalContent({
+        message: "오답입니다.",
+        buttons: [
+          { label: "확인", onClick: () => setIsModalOpen(false) }
+        ],
+      });
+    }
+    setIsModalOpen(true)
+  }
+  function toRelativeCoordinates(sticks) {
+    // 전체 중심 좌표 계산
+    const centerX = sticks.reduce((sum, stick) => sum + stick.x, 0) / sticks.length
+    const centerY = sticks.reduce((sum, stick) => sum + stick.y, 0) / sticks.length
 
+    // 각 성냥개비의 상대 좌표 계산
+    return sticks.map((stick) => ({
+      id: stick.id,
+      relativeX: Math.round(stick.x - centerX),
+      relativeY: Math.round(stick.y - centerY),
+      angle: Math.abs(stick.angle)
+    }))
+  }
+
+  const checkRemoveSimilarity = (moveCounts, solution) => {
+    // 이동 횟수 확인
+    if (Object.keys(moveCounts).length !== limit) return false
+
+    // 삭제된 성냥개비의 id 가져오기
+    const removeIds = Object.keys(moveCounts);
+    
+    // 삭제된 성냥이 solution과 정확히 일치하는지 확인
+    return !solution.some(stick => {
+      return removeIds.includes(stick.id)
+    })
+  }
+
+  const checkMoveSimilarity = (currentState, solution, threshold = 30) => {
+    // 상대 좌표로 변환
+    const relativeCurrent = toRelativeCoordinates(currentState);
+    const relativeSolution = toRelativeCoordinates(solution);
+
+    if (relativeCurrent.length !== relativeSolution.length) return false
+
+    return relativeCurrent.every((currentStick) => {
+      return relativeSolution.some((solutionStick) => {
+        const positionMatch =
+        Math.abs(currentStick.relativeX - solutionStick.relativeX) <= threshold &&
+        Math.abs(currentStick.relativeY - solutionStick.relativeY) <= threshold;
+        const angleMatch =
+          normalizeAngle(currentStick.angle) - normalizeAngle(solutionStick.angle) < threshold
+        return positionMatch && angleMatch
+      })
+    })
+  }
   return (
     <>
-    <div className="flex flex-row gap-2 absolute z-10">
+    <div className="flex flex-row gap-2 absolute z-10 ">
     <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={reset} disabled={currentStep < 0}>⏮️</button>
       <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={undo} disabled={currentStep < 0}>◀️</button>
       <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={redo} disabled={currentStep >= history.length - 1}>▶️</button>
-      {gameType !== "move" ? <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={remove} disabled={selectedMatchstick == null} >Remove</button> : null}
-      <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={null} disabled={Object.keys(moveCounts).length !== limit}>✅</button>
+      {gameType !== "move" ? <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={handleRemove} disabled={selectedMatchstick == null} >Remove</button> : null}
+      <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={handleCheckAnswer} disabled={Object.keys(moveCounts).length !== limit}>✅</button>
       <div>남은 횟수 : {limit - Object.keys(moveCounts).length}</div>
     </div>
+    <div className="text-center pt-10">{puzzleData?.title}</div>
+    {isModalOpen && (
+        <ResultModal
+          message={modalContent.message}
+          buttons={modalContent.buttons}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     <Stage
       ref={stageRef}
       width={window.innerWidth}
-      height={window.innerHeight}
+      height={window.innerHeight * 0.7}
       onClick={handleBackgroundClick}
       onTap={handleBackgroundClick}
+      className="bg-stone-200 rounded-2xl"
     >
       <Layer>
+        {/* <Rect
+          x={0}
+          y={0}
+          width={window.innerWidth}
+          height={window.innerHeight * 0.5}
+          fill="seagreen" // 배경색
+          cornerRadius={20} // 모서리 라운드 설정
+          listening={false} // 배경 클릭 비활성화
+        /> */}
         {matchsticks
           .filter((stick) => !stick.isDeleted)
           .map((stick) => (
-          <Matchstick
-            key={stick.id}
-            stick={stick}
-            image={imageRef.current}
-            isSelected={stick.id === selectedMatchstick}
-            onSelect={handleSelect}
-            onDragEnd={handleDragEnd}
-            onTransformEnd={handleRotateEnd}
-            canMove={gameType === "move"}
-          />
+            <Fragment key={stick.id}>
+              <Matchstick
+                key={stick.id}
+                stick={stick}
+                image={imageRef.current}
+                isSelected={stick.id === selectedMatchstick}
+                onSelect={handleSelect}
+                onDragEnd={handleDragEnd}
+                onTransformEnd={handleRotateEnd}
+                canMove={gameType === "move"}
+              />
+              {/* 성냥개비 위에 id를 표시 */}
+              <Text
+                x={stick.x} // Rect의 중심 위에 배치
+                y={stick.y } // Rect의 위쪽에 배치
+                text={stick.id}
+                fontSize={14}
+                fill="black"
+                align="center"
+              />
+            </Fragment>
         ))}
         {/* Transformer */}
         <Transformer
