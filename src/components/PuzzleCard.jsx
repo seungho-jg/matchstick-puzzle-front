@@ -6,12 +6,13 @@ export default function PuzzleCard({ puzzle }) {
     id,
     title,
     difficulty,
-    thumbnailUrl,
-    tags,
-    rating,
-    totalRatings,
-    author
+    category,
+    createBy
   } = puzzle
+
+  // JSON.parse를 사용하여 category를 배열로 변환
+  const categoryList = JSON.parse(category);
+
 
   return (
     <Link 
@@ -19,11 +20,9 @@ export default function PuzzleCard({ puzzle }) {
       className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
     >
       <div className="aspect-w-16 aspect-h-9">
-        {/* <img 
-          src={thumbnailUrl} 
-          alt={title}
-          className="w-full h-full object-cover"
-        /> */}
+        <div 
+          className="w-full h-full bg-slate-300"
+        />
       </div>
       <div className="p-4">
         <div className="flex items-center justify-between mb-2">
@@ -40,11 +39,11 @@ export default function PuzzleCard({ puzzle }) {
         <div className="flex items-center mb-2">
           <StarIcon className="h-5 w-5 text-yellow-400" />
           <span className="ml-1 text-gray-700">
-            {rating} ({totalRatings})
+            {/* {rating} ({totalRatings}) */}
           </span>
         </div>
         <div className="flex flex-wrap gap-2 mb-3">
-          {tags.map(tag => (
+          {categoryList.map(tag => (
             <span 
               key={tag} 
               className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm"
@@ -59,7 +58,7 @@ export default function PuzzleCard({ puzzle }) {
             alt={author.name}
             className="h-6 w-6 rounded-full"
           /> */}
-          <span className="ml-2">{author.name}</span>
+          <span className="ml-2">{createBy}</span>
         </div>
       </div>
     </Link>

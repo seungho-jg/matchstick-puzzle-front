@@ -26,16 +26,22 @@ export default function Header() {
           </Link>
           
           <nav className="flex items-center space-x-4">
-            <div>
+            {/* <div>
               <button onClick={() => darkModeHandler()}>
                 {dark ? "☀︎" : "☾"}
               </button>
-            </div>
+            </div> */}
             <Link
               to="/"
               className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
             >
               퍼즐 목록
+            </Link>
+            <Link
+              to="/"
+              className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+            >
+              랭킹
             </Link>
             <Link
               to="/account/profile"

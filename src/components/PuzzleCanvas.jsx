@@ -3,10 +3,10 @@ import { Stage, Layer, Transformer, Text } from "react-konva"
 import Matchstick from "./Matchstick"
 import { normalizeAngle } from "../utils/calculator"
 import ResultModal from "./ResultModal"
+import { fetchPuzzleById } from "../api/api-puzzle"
 
-export default function PuzzleCanvas() {
+export default function PuzzleCanvas({ puzzleData }) {
   // 게임 초기 데이터
-  const [gameData, setGameData] = useState(null) // JSON 데이터 저장
   const [matchsticks, setMatchsticks] = useState([])
   const [gameType, setGameType] = useState("")
   const [limit, setLimit] = useState(0)
@@ -27,21 +27,15 @@ export default function PuzzleCanvas() {
 
   // JSON 데이터 로드
   useEffect(()=>{
-    async function loadGameData() {
-      try{
-        const response = await fetch("/gameData.json")
-        const data = await response.json()
-        setGameData(data)
-        setMatchsticks(data.initialState)
-        setGameType(data.gameType)
-        setLimit(data.limit)
+   function loadGameData() {
+      if(!puzzleData || !puzzleData.id ) return
+        setMatchsticks(JSON.parse(puzzleData?.initialState))
+        setGameType(puzzleData?.gameType)
+        setLimit(+puzzleData?.limit)
         setCurrentStep(-1)
-      } catch (error) {
-        console.error("Failed to load game data: ", error)
-      }
     }
     loadGameData()
-  }, [])
+  }, [puzzleData])
 
   // 이미지 로드
   useEffect(() => {
@@ -156,7 +150,7 @@ export default function PuzzleCanvas() {
 
   // 상태 복원 함수
   const restorePreviousPosition = (id) => {
-    const findOne =  gameData.initialState.find((stick) =>  stick.id === id)
+    const findOne =  puzzleData.initialState.find((stick) =>  stick.id === id)
 
     setMatchsticks((prev) =>
       prev.map((stick) =>
@@ -213,12 +207,18 @@ export default function PuzzleCanvas() {
   }
 
   const reset = () => {
-    setHistory([])
-    setCurrentStep(-1)
-    setMatchsticks(gameData.initialState)
-    setSelectedMatchstick(null)
-    setMoveCounts({})
-  }
+    try {
+      const initialState = JSON.parse(puzzleData.initialState);
+      setMatchsticks(initialState);
+    } catch (error) {
+      console.error("Failed to parse initialState during reset:", error);
+      setMatchsticks([]); // 기본값으로 설정
+    }
+    setHistory([]);
+    setCurrentStep(-1);
+    setSelectedMatchstick(null);
+    setMoveCounts({});
+  };
 
   const handleRemove = () => {
     if (gameType !== "remove") {
@@ -252,7 +252,7 @@ export default function PuzzleCanvas() {
     }
   }
   const handleCheckAnswer = () => {
-    const { solution } = gameData
+    const  solution  =  JSON.parse(puzzleData.solution)
     let isCorrect = false;
     
     if (gameType === "move") {
@@ -332,7 +332,7 @@ export default function PuzzleCanvas() {
       <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={handleCheckAnswer} disabled={Object.keys(moveCounts).length !== limit}>✅</button>
       <div>남은 횟수 : {limit - Object.keys(moveCounts).length}</div>
     </div>
-    <div className="text-center pt-10">{gameData?.title}</div>
+    <div className="text-center pt-10">{puzzleData?.title}</div>
     {isModalOpen && (
         <ResultModal
           message={modalContent.message}
