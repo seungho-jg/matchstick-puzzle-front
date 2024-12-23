@@ -1,15 +1,17 @@
 import { useRef, useEffect, useState, Fragment } from "react"
-import { Stage, Layer, Transformer, Text, Rect } from "react-konva"
+import { Stage, Layer, Transformer, Text } from "react-konva"
 import Matchstick from "./Matchstick"
 import { normalizeAngle } from "../utils/calculator"
 import ResultModal from "./ResultModal"
-import { fetchPuzzleById } from "../api/api-puzzle"
 
 export default function PuzzleCanvas({ puzzleData }) {
   // 게임 초기 데이터
+  const [initMatchstick, setInitMatchstick] = useState([])
   const [matchsticks, setMatchsticks] = useState([])
   const [gameType, setGameType] = useState("")
   const [limit, setLimit] = useState(0)
+  const [scale, setScale] = useState(1) // Stage 확대/축소 비율
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
 
   // 게임 상태
   const [selectedMatchstick, setSelectedMatchstick] = useState(null)
@@ -24,18 +26,84 @@ export default function PuzzleCanvas({ puzzleData }) {
   const imageRef = useRef(null);
   const transformerRef = useRef(null);
   const stageRef = useRef(null);
+  const stageContainerRef = useRef(null)
 
+
+  const adjustCenter = () => {
+    if (!stageContainerRef.current || !matchsticks.length) return
+    
+    const stageContainer = stageContainerRef.current.getBoundingClientRect()
+    const stageWidth = stageContainer.width
+    const stageHeight = stageContainer.height
+    
+    // 성냥의 바운딩 박스 계산
+    const minX = Math.min(...matchsticks.map((stick) => stick.x));
+    const maxX = Math.max(...matchsticks.map((stick) => stick.x));
+    const minY = Math.min(...matchsticks.map((stick) => stick.y));
+    const maxY = Math.max(...matchsticks.map((stick) => stick.y));
+
+    const boundingWidth = maxX - minX;
+    const boundingHeight = maxY - minY;
+
+    // 스테이지 스케일 계산
+    const scaleX = stageWidth / boundingWidth;
+    const scaleY = stageHeight / boundingHeight;
+    const newScale = Math.min(scaleX, scaleY) * 0.8; // 여백을 위해 0.8 배율 추가
+
+    const stageCenter = {
+      x: stageWidth / 2,
+      y: stageHeight / 2,
+    };
+    
+    const matchsticksCenter = {
+      x: (minX + maxX) / 2,
+      y: (minY + maxY) / 2,
+    };
+    
+    const newOffset = {
+      x: stageCenter.x - matchsticksCenter.x * newScale,
+      y: stageCenter.y - matchsticksCenter.y * newScale,
+    };
+
+    setScale(newScale); // 스케일 업데이트
+    setOffset(newOffset); // 오프셋 업데이트
+
+    setMatchsticks(prev => prev.map(stick => ({
+      ...stick,
+      x: stick.x + newOffset.x,
+      y: stick.y + newOffset.y,
+    })));
+    setInitMatchstick(prev => prev.map(stick => ({
+      ...stick,
+      x: stick.x + newOffset.x,
+      y: stick.y + newOffset.y,
+    })))
+  };
   // JSON 데이터 로드
   useEffect(()=>{
-   function loadGameData() {
+    function loadGameData() {
       if(!puzzleData || !puzzleData.id ) return
-        setMatchsticks(JSON.parse(puzzleData?.initialState))
-        setGameType(puzzleData?.gameType)
-        setLimit(+puzzleData?.limit)
-        setCurrentStep(-1)
+
+      const initialMatchsticks = JSON.parse(puzzleData.initialState);
+      setMatchsticks(initialMatchsticks)
+      setInitMatchstick(initialMatchsticks)
+      setGameType(puzzleData.gameType)
+      setLimit(puzzleData.limit)
+      setCurrentStep(-1)
+      adjustCenter()
     }
     loadGameData()
   }, [puzzleData])
+
+  // // 창 크기 변경 이벤트
+  // useEffect(() => {
+  //   const handleWindowResize = () => {
+  //     adjustCenter(); // 창 크기 변경 시 호출
+  //   };
+
+  //   window.addEventListener("resize", handleWindowResize);
+  //   return () => window.removeEventListener("resize", handleWindowResize);
+  // }, [matchsticks]);
 
   // 이미지 로드
   useEffect(() => {
@@ -53,7 +121,6 @@ export default function PuzzleCanvas({ puzzleData }) {
     if (tr) {
       if (selectedMatchstick) {
         const selectedNode = stageRef.current.findOne(`#${selectedMatchstick}`);
-        // console.log(selectedNode)
         if (selectedNode) {
           tr.nodes([selectedNode]) // 선택된 노드에 Transformer 적용
           tr.getLayer().batchDraw()
@@ -129,6 +196,7 @@ export default function PuzzleCanvas({ puzzleData }) {
   }
 
   const saveState = (type, id, before, after) => {
+
     const newHistory = history.slice(0, currentStep + 1) // 현재 상태 이후의 기록 삭제
     newHistory.push({
       type,
@@ -208,16 +276,15 @@ export default function PuzzleCanvas({ puzzleData }) {
 
   const reset = () => {
     try {
-      const initialState = JSON.parse(puzzleData.initialState);
-      setMatchsticks(initialState);
+      setMatchsticks(initMatchstick)
+      setHistory([]);
+      setCurrentStep(-1);
+      setSelectedMatchstick(null);
+      setMoveCounts({});
     } catch (error) {
       console.error("Failed to parse initialState during reset:", error);
       setMatchsticks([]); // 기본값으로 설정
     }
-    setHistory([]);
-    setCurrentStep(-1);
-    setSelectedMatchstick(null);
-    setMoveCounts({});
   };
 
   const handleRemove = () => {
@@ -231,13 +298,11 @@ export default function PuzzleCanvas({ puzzleData }) {
     }
     if (selectedMatchstick) {
       const select = matchsticks.find((stick) => stick.id === selectedMatchstick)
-      // console.log('이전: ',select)
       setMatchsticks((prev) =>
         prev.map((stick) =>
           stick.id === selectedMatchstick ? {...stick, isDeleted: true} : stick
         )
       )
-      // console.log('이후: ',select)
       setSelectedMatchstick(null)
       const before = { ...select, isDeleted: false }
       const after = { ...select, isDeleted: true }
@@ -252,7 +317,7 @@ export default function PuzzleCanvas({ puzzleData }) {
     }
   }
   const handleCheckAnswer = () => {
-    const  solution  =  JSON.parse(puzzleData.solution)
+    const solution = JSON.parse(puzzleData.solution)
     let isCorrect = false;
     
     if (gameType === "move") {
@@ -322,6 +387,23 @@ export default function PuzzleCanvas({ puzzleData }) {
       })
     })
   }
+  useEffect(() => {
+    const updateStageSize = () => {
+      const stageContainer = document.querySelector(".stage-container"); // Tailwind 스타일이 적용된 요소
+      if (stageContainer) {
+        const width = stageContainer.offsetWidth; // 실제 width 가져오기
+        const height = stageContainer.offsetHeight; // 실제 height 가져오기
+        stageRef.current.width(width);
+        stageRef.current.height(height);
+      }
+    };
+  
+    updateStageSize()
+    window.addEventListener("resize", updateStageSize);
+  
+    return () => window.removeEventListener("resize", updateStageSize);
+  }, []);
+
   return (
     <>
     <div className="flex flex-row gap-2 absolute z-10 ">
@@ -340,61 +422,55 @@ export default function PuzzleCanvas({ puzzleData }) {
           onClose={() => setIsModalOpen(false)}
         />
       )}
-    <Stage
-      ref={stageRef}
-      width={window.innerWidth}
-      height={window.innerHeight * 0.7}
-      onClick={handleBackgroundClick}
-      onTap={handleBackgroundClick}
-      className="bg-stone-200 rounded-2xl"
-    >
-      <Layer>
-        {/* <Rect
-          x={0}
-          y={0}
-          width={window.innerWidth}
-          height={window.innerHeight * 0.5}
-          fill="seagreen" // 배경색
-          cornerRadius={20} // 모서리 라운드 설정
-          listening={false} // 배경 클릭 비활성화
-        /> */}
-        {matchsticks
-          .filter((stick) => !stick.isDeleted)
-          .map((stick) => (
-            <Fragment key={stick.id}>
-              <Matchstick
-                key={stick.id}
-                stick={stick}
-                image={imageRef.current}
-                isSelected={stick.id === selectedMatchstick}
-                onSelect={handleSelect}
-                onDragEnd={handleDragEnd}
-                onTransformEnd={handleRotateEnd}
-                canMove={gameType === "move"}
-              />
-              {/* 성냥개비 위에 id를 표시 */}
-              <Text
-                x={stick.x} // Rect의 중심 위에 배치
-                y={stick.y } // Rect의 위쪽에 배치
-                text={stick.id}
-                fontSize={14}
-                fill="black"
-                align="center"
-              />
-            </Fragment>
-        ))}
-        {/* Transformer */}
-        <Transformer
-          ref={transformerRef}
-          rotationSnaps={[0, 90, 180, 270]} // 회전 스냅
-          anchorSize={10} // 앵커 크기
-          anchorCornerRadius={3}
-          centeredScaling={true}
-          resizeEnabled={false} // 크기 조정 비활성화
-          rotateEnabled={gameType === "move"}
-        />
-      </Layer>
-    </Stage>
+      <div ref={stageContainerRef} className="stage-container w-full h-[70vh] relative bg-stone-200 rounded-3xl">
+        <Stage
+          ref={stageRef}
+          scaleX={scale}
+          scaleY={scale}
+          width={stageContainerRef.current?.offsetWidth || window.innerWidth}
+          height={stageContainerRef.current?.offsetHeight || window.innerHeight * 0.7}
+          onClick={handleBackgroundClick}
+          onTap={handleBackgroundClick}
+        >
+          <Layer>
+            {matchsticks
+              .filter((stick) => !stick.isDeleted)
+              .map((stick) => (
+                <Fragment key={stick.id}>
+                  <Matchstick
+                    key={stick.id}
+                    stick={stick}
+                    image={imageRef.current}
+                    isSelected={stick.id === selectedMatchstick}
+                    onSelect={handleSelect}
+                    onDragEnd={handleDragEnd}
+                    onTransformEnd={handleRotateEnd}
+                    canMove={gameType === "move"}
+                  />
+                  {/* 성냥개비 위에 id를 표시 */}
+                  <Text
+                    x={stick.x} // Rect의 중심 위에 배치
+                    y={stick.y } // Rect의 위쪽에 배치
+                    text={stick.id}
+                    fontSize={14}
+                    fill="black"
+                    align="center"
+                  />
+                </Fragment>
+            ))}
+            {/* Transformer */}
+            <Transformer
+              ref={transformerRef}
+              rotationSnaps={[0, 90, 180, 270]} // 회전 스냅
+              anchorSize={10} // 앵커 크기
+              anchorCornerRadius={3}
+              centeredScaling={true}
+              resizeEnabled={false} // 크기 조정 비활성화
+              rotateEnabled={gameType === "move"}
+            />
+          </Layer>
+        </Stage>
+      </div>
     </>
   )
 }
