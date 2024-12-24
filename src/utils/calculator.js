@@ -16,7 +16,7 @@ function toRelativeCoordinates(sticks) {
   }))
 }
 
-export const checkRemoveSimilarity = (moveCounts, solution) => {
+export const checkRemoveSimilarity = (moveCounts, solution, limit) => {
   // 이동 횟수 확인
   if (Object.keys(moveCounts).length !== limit) return false
 

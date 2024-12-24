@@ -11,6 +11,7 @@ export default function PuzzleCanvas({ puzzleData }) {
   const [gameType, setGameType] = useState("")
   const [limit, setLimit] = useState(0)
   const [scale, setScale] = useState(1) // Stage 확대/축소 비율
+  const [likes, setLikes] = useState(0) 
 
   // 게임 상태
   const [selectedMatchstick, setSelectedMatchstick] = useState(null)
@@ -19,14 +20,13 @@ export default function PuzzleCanvas({ puzzleData }) {
   const [moveCounts, setMoveCounts] = useState({})
 
   // 모달창
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalContent, setModalContent] = useState({});
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [modalContent, setModalContent] = useState({})
 
-  const imageRef = useRef(null);
-  const transformerRef = useRef(null);
-  const stageRef = useRef(null);
+  const imageRef = useRef(null)
+  const transformerRef = useRef(null)
+  const stageRef = useRef(null)
   const stageContainerRef = useRef(null)
-
 
   const adjustCenter = () => {
     if (!stageContainerRef.current || !matchsticks.length) return
@@ -36,18 +36,18 @@ export default function PuzzleCanvas({ puzzleData }) {
     const stageHeight = stageContainer.height
     
     // 성냥의 바운딩 박스 계산
-    const minX = Math.min(...matchsticks.map((stick) => stick.x));
-    const maxX = Math.max(...matchsticks.map((stick) => stick.x));
-    const minY = Math.min(...matchsticks.map((stick) => stick.y));
-    const maxY = Math.max(...matchsticks.map((stick) => stick.y));
+    const minX = Math.min(...matchsticks.map((stick) => stick.x))
+    const maxX = Math.max(...matchsticks.map((stick) => stick.x))
+    const minY = Math.min(...matchsticks.map((stick) => stick.y))
+    const maxY = Math.max(...matchsticks.map((stick) => stick.y))
 
-    const boundingWidth = maxX - minX;
-    const boundingHeight = maxY - minY;
+    const boundingWidth = maxX - minX
+    const boundingHeight = maxY - minY
 
     // 스테이지 스케일 계산
     const scaleX = stageWidth / boundingWidth;
     const scaleY = stageHeight / boundingHeight;
-    const newScale = Math.min(scaleX, scaleY) * 0.8; // 여백을 위해 0.8 배율 추가
+    const newScale = Math.min(scaleX, scaleY) * 0.77 // 여백을 위해 0.77 배율 추가
 
     const stageCenter = {
       x: stageWidth / 2,
@@ -206,7 +206,7 @@ export default function PuzzleCanvas({ puzzleData }) {
 
   // 상태 복원 함수
   const restorePreviousPosition = (id) => {
-    const findOne =  puzzleData.initialState.find((stick) =>  stick.id === id)
+    const findOne =  initMatchstick.find((stick) =>  stick.id === id)
 
     setMatchsticks((prev) =>
       prev.map((stick) =>
@@ -265,14 +265,19 @@ export default function PuzzleCanvas({ puzzleData }) {
   const reset = () => {
     try {
       setMatchsticks(initMatchstick)
-      setHistory([]);
-      setCurrentStep(-1);
-      setSelectedMatchstick(null);
-      setMoveCounts({});
+      setHistory([])
+      setCurrentStep(-1)
+      setSelectedMatchstick(null)
+      setMoveCounts({})
     } catch (error) {
-      console.error("Failed to parse initialState during reset:", error);
-      setMatchsticks([]); // 기본값으로 설정
+      console.error("Failed to parse initialState during reset:", error)
+      setMatchsticks([]) // 기본값으로 설정
     }
+  };
+
+  // 좋아요 증가 핸들러
+  const handleLike = () => {
+    setLikes((prev) => prev + 1);
   };
 
   const handleRemove = () => {
@@ -311,7 +316,7 @@ export default function PuzzleCanvas({ puzzleData }) {
     if (gameType === "move") {
       isCorrect = checkMoveSimilarity(matchsticks, solution, 10)
     } else if (gameType === "remove") {
-      isCorrect = checkRemoveSimilarity(moveCounts, solution)
+      isCorrect = checkRemoveSimilarity(moveCounts, solution, limit)
     }
     if (isCorrect) {
       setModalContent({
@@ -343,22 +348,14 @@ export default function PuzzleCanvas({ puzzleData }) {
     };
   
     updateStageSize()
-    window.addEventListener("resize", updateStageSize);
+    window.addEventListener("resize", updateStageSize)
   
-    return () => window.removeEventListener("resize", updateStageSize);
-  }, []);
+    return () => window.removeEventListener("resize", updateStageSize)
+  }, [])
 
   return (
     <>
-    <div className="flex flex-row gap-2 absolute z-10 ">
-    <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={reset} disabled={currentStep < 0}>⏮️</button>
-      <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={undo} disabled={currentStep < 0}>◀️</button>
-      <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={redo} disabled={currentStep >= history.length - 1}>▶️</button>
-      {gameType !== "move" ? <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={handleRemove} disabled={selectedMatchstick == null} >Remove</button> : null}
-      <button className="bg-slate-200 rounded-md px-1 disabled:opacity-35" onClick={handleCheckAnswer} disabled={Object.keys(moveCounts).length !== limit}>✅</button>
-      <div>남은 횟수 : {limit - Object.keys(moveCounts).length}</div>
-    </div>
-    <div className="text-center pt-10">{puzzleData?.title}</div>
+    <div className="pt-5 text-neutral-800 pl-2 pb-2 font-bold text-2xl">{puzzleData?.title}</div>
     {isModalOpen && (
         <ResultModal
           message={modalContent.message}
@@ -366,7 +363,15 @@ export default function PuzzleCanvas({ puzzleData }) {
           onClose={() => setIsModalOpen(false)}
         />
       )}
-      <div ref={stageContainerRef} className="stage-container w-full h-[70vh] relative bg-stone-200 rounded-3xl">
+      <div ref={stageContainerRef} className="relative stage-container w-full h-[70vh] bg-stone-200 rounded-3xl">
+        <div className="absolute w-full top-2 left-2 flex flex-row z-20">
+            <button className="hover:bg-stone-300 rounded-md px-2 py-1 disabled:opacity-35" onClick={reset} disabled={currentStep < 0}>⏮️</button>
+            <button className="hover:bg-stone-300 rounded-md px-2 py-1 disabled:opacity-35" onClick={undo} disabled={currentStep < 0}>◀️</button>
+            <button className="hover:bg-stone-300 rounded-md px-2 py-1 disabled:opacity-35" onClick={redo} disabled={currentStep >= history.length - 1}>▶️</button>
+            {gameType !== "move" ? <button className="hover:bg-stone-300 rounded-md px-2 py-1 disabled:opacity-35" onClick={handleRemove} disabled={selectedMatchstick == null} >Remove</button> : null}
+            <button className="hover:bg-stone-300 rounded-md px-2 py-1 disabled:opacity-35" onClick={handleCheckAnswer} disabled={Object.keys(moveCounts).length !== limit}>✅</button>
+          <div className="absolute top-1.5 right-6 font-mono text-gray-500">Left : {limit - Object.keys(moveCounts).length}</div>
+        </div>
         <Stage
           ref={stageRef}
           scaleX={scale}
@@ -414,6 +419,20 @@ export default function PuzzleCanvas({ puzzleData }) {
             />
           </Layer>
         </Stage>
+        <div className="flex items-center justify-between gap-2 -translate-y-10 w-full">
+          <div className="translate-x-2">
+            <button
+              onClick={handleLike}
+              className="px-2 py-1 rounded-full hover:bg-pink-200"
+            >
+            ❤️ 
+            </button>
+            <span className="font-mono text-gray-700 ml-1">{likes} Likes</span>
+          </div>
+          <div className="-translate-x-4 font-serif text-stone-500">
+            createdBy seungho
+          </div>
+        </div>
       </div>
     </>
   )
