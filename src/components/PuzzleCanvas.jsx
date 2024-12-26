@@ -3,6 +3,7 @@ import { Stage, Layer, Transformer, Text } from "react-konva"
 import Matchstick from "./Matchstick"
 import {checkRemoveSimilarity, checkMoveSimilarity } from "../utils/calculator"
 import ResultModal from "./ResultModal"
+import LikeButton from "./LikeBtn"
 
 export default function PuzzleCanvas({ puzzleData }) {
   // 게임 초기 데이터
@@ -11,7 +12,6 @@ export default function PuzzleCanvas({ puzzleData }) {
   const [gameType, setGameType] = useState("")
   const [limit, setLimit] = useState(0)
   const [scale, setScale] = useState(1) // Stage 확대/축소 비율
-  const [likes, setLikes] = useState(0) 
 
   // 게임 상태
   const [selectedMatchstick, setSelectedMatchstick] = useState(null)
@@ -81,7 +81,6 @@ export default function PuzzleCanvas({ puzzleData }) {
   useEffect(()=>{
     function loadGameData() {
       if(!puzzleData || !puzzleData.id ) return
-
       const initialMatchsticks = JSON.parse(puzzleData.initialState);
       setMatchsticks(initialMatchsticks)
       setInitMatchstick(initialMatchsticks)
@@ -421,13 +420,7 @@ export default function PuzzleCanvas({ puzzleData }) {
         </Stage>
         <div className="flex items-center justify-between gap-2 -translate-y-10 w-full">
           <div className="translate-x-2">
-            <button
-              onClick={handleLike}
-              className="px-2 py-1 rounded-full hover:bg-pink-200"
-            >
-            ❤️ 
-            </button>
-            <span className="font-mono text-gray-700 ml-1">{likes} Likes</span>
+            <LikeButton likes={puzzleData?._count.likes} puzzleId={puzzleData?.id}/>
           </div>
           <div className="-translate-x-4 font-serif text-stone-500">
             createdBy @seungho

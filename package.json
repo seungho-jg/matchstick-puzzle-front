@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@heroicons/react": "^2.1.5",
+    "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^3.9.1",
     "jwt-decode": "^4.0.0",
     "konva": "^9.3.16",

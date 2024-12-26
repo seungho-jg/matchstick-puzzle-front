@@ -17,7 +17,7 @@ export default function LoginPage() {
     try {
       const response = await fetchLogin(data);
       setToken(response.token); // 로그인 성공 시 토큰 저장
-      console.log('로그인 성공!!',response)
+      console.log('로그인 성공!!')
       navigate('/'); // 로그인 후 홈으로 이동
     } catch (error) {
       alert(error.response?.data?.message || '로그인에 실패했습니다.');
