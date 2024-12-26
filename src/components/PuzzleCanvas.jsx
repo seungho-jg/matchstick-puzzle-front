@@ -430,7 +430,7 @@ export default function PuzzleCanvas({ puzzleData }) {
             <span className="font-mono text-gray-700 ml-1">{likes} Likes</span>
           </div>
           <div className="-translate-x-4 font-serif text-stone-500">
-            createdBy seungho
+            createdBy @seungho
           </div>
         </div>
       </div>
