@@ -9,6 +9,8 @@ import Profile from './pages/profile'
 import PuzzleLayout from './layouts/puzzleLayout'
 import AuthLayout from './layouts/authLayout'
 import NotFound from './pages/notfound'
+import RegisterPage from './pages/register'
+import LoginPage from './pages/login'
 
 const router = createBrowserRouter([
   {
@@ -19,6 +21,14 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <Home />
+      },
+      {
+        path: "register",
+        element: <RegisterPage />
+      },
+      {
+        path: "login",
+        element: <LoginPage />
       },
       // 기본
       {

@@ -10,7 +10,6 @@ export default function Home() {
     async function loadPuzzles() {
       try {
         const data = await fetchAllPuzzles()
-        console.log('data: ', data)
         setPuzzles(data)
       } catch (error) {
         setError(error.message)
