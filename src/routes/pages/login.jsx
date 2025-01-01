@@ -16,7 +16,6 @@ export default function LoginPage() {
   const onSubmit = async (data) => {
     try {
       const response = await fetchLogin(data)
-      console.log('Login response:', response) // API 응답 확인
       setToken(response.token)
       console.log('로그인 성공!!')
       navigate('/');
