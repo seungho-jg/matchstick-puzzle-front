@@ -11,15 +11,17 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  const setToken = useAuthStore((state) => state.setToken); // zustand의 setToken 사용
+  const setToken = useAuthStore((state) => state.setToken) // zustand의 setToken 사용
 
   const onSubmit = async (data) => {
     try {
-      const response = await fetchLogin(data);
-      setToken(response.token); // 로그인 성공 시 토큰 저장
+      const response = await fetchLogin(data)
+      console.log('Login response:', response) // API 응답 확인
+      setToken(response.token)
       console.log('로그인 성공!!')
-      navigate('/'); // 로그인 후 홈으로 이동
+      navigate('/');
     } catch (error) {
+      console.error('Login error:', error); // 에러 상세 확인
       alert(error.response?.data?.message || '로그인에 실패했습니다.');
     }
   };

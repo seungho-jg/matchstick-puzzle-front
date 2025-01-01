@@ -1,21 +1,24 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react"
 import useAuthStore from "../store/authStore"
 
 export default function Header() {
-  const token = useAuthStore((state) => state.token); // 토큰 상태 가져오기
-  const clearToken = useAuthStore((state) => state.clearToken); // 로그아웃 함수
-
+  const token = useAuthStore((state) => state.token)
+  const clearToken = useAuthStore((state) => state.clearToken)
   const [dark, setDark] = useState(false)
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+  const navigate = useNavigate()
 
   const darkModeHandler = () => {
-    setDark(!dark);
-    document.body.classList.toggle("dark")
-  }
+    setDark(!dark)
+    document.body.classList.toggle("dark");
+  };
 
   const handleLogout = () => {
-    clearToken(); // 토큰 초기화
-    alert("로그아웃 되었습니다.");
+    clearToken()
+    setIsProfileMenuOpen(false)
+    alert("로그아웃 되었습니다.")
+    navigate('/')
   };
 
   return (
@@ -34,42 +37,55 @@ export default function Header() {
           </Link>
           
           <nav className="flex items-center gap-3">
-            {/* <div>
-              <button onClick={() => darkModeHandler()}>
-                {dark ? "☀︎" : "☾"}
-              </button>
-            </div> */}
             <Link
               to="/"
-              className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+              className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium dark:text-gray-300 dark:hover:text-white"
             >
               퍼즐 목록
             </Link>
             <Link
-              to="/"
-              className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+              to="/ranking"
+              className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium dark:text-gray-300 dark:hover:text-white"
             >
               랭킹
             </Link>
+            
             {token ? (
-              <div className="flex flex-col">
-                <Link
-                  to="/account/profile"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+              <div className="relative">
+                <button
+                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                  className="flex items-center text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium dark:text-gray-300 dark:hover:text-white"
                 >
-                  마이페이지
-                </Link>
-                {/* <button
-                  onClick={handleLogout}
-                  className="relative scale-75 -mt-3 right-0 text-white bg-orange-300 px-1 py-1 rounded-md text-xs font-medium"
-                >
-                  로그아웃
-                </button> */}
+                  <span>프로필</span>
+                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {isProfileMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-slate-700">
+                    <div className="py-1">
+                      <Link
+                        to="/account/profile"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-600"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                      >
+                        마이페이지
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-600"
+                      >
+                        로그아웃
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <Link
                 to="/login"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium dark:text-gray-300 dark:hover:text-white"
               >
                 로그인
               </Link>
