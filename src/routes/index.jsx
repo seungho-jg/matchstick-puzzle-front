@@ -11,6 +11,14 @@ import AuthLayout from './layouts/authLayout'
 import NotFound from './pages/notfound'
 import RegisterPage from './pages/register'
 import LoginPage from './pages/login'
+import { authLoader } from './loaders/authLoader'
+
+// 로딩 컴포넌트 생성
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center h-screen">
+    <div className="text-lg">로딩중...</div>
+  </div>
+);
 
 const router = createBrowserRouter([
   {
@@ -49,8 +57,8 @@ const router = createBrowserRouter([
       {
         path: "account",
         element: <AuthLayout />,
-        // loader 에서 인증 체크
-        loader: () => {return "ok"},
+        errorElement: <ErrorPage />,
+        loader: authLoader,
         children: [
           {
             path: "profile",
@@ -65,12 +73,13 @@ const router = createBrowserRouter([
       }
     ]
   }
-]
+],
 )
+
 
 export default function Router() {
   return <RouterProvider 
     router={router}
-    fallbackElement={<div>로딩중...</div>}
+    fallbackElement={<LoadingFallback />}
   />
 }

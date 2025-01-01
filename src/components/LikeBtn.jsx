@@ -1,54 +1,32 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"
 import { getLikes, postLikes, removeLikes } from '../api/api-like'
-import useAuthStore from "../store/authStore";
 
 export default function LikeButton({ puzzleId, likes: initialLikes }) {
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(initialLikes);
-  const token = useAuthStore((state) => state.token)
-  // 초기 좋아요 상태 설정 로직은 별도로 추가해야 할 수 있습니다
-  // 예: API를 통해 현재 사용자가 해당 퍼즐을 좋아요 했는지 확인
-
-  // useEffect(() => {
-  //   const fetchLikeStatus = async () => {
-  //     if (!token) return;
-  //     try {
-  //       const response = await getLikes(puzzleId, token);
-  //       setLiked(response.isLiked); // setLikeCount가 아닌 setLiked를 사용
-  //     } catch (error) {
-  //       console.error('좋아요 상태 확인 중 오류 발생:', error);
-  //     }
-  //   };
-  
-  //   fetchLikeStatus();
-  // }, [puzzleId, token]); // puzzleId와 token을 의존성 배열에 추가
+  const [liked, setLiked] = useState(false)
+  const [likeCount, setLikeCount] = useState(initialLikes)
 
   useEffect(() => {
-    setLikeCount(initialLikes);
-  }, [initialLikes]);
+    setLikeCount(initialLikes)
+  }, [initialLikes])
 
   
   const handleLike = async () => {
     try {
-      if (!token) {
-        alert('로그인이 필요합니다.');
-        return;
-      }
       if (liked) {
-        await removeLikes(puzzleId, token);
-        setLikeCount(prev => prev - 1);
-        setLiked(false);
+        await removeLikes(puzzleId)
+        setLikeCount(prev => prev - 1)
+        setLiked(false)
       } else {
-        await postLikes(puzzleId, token);
-        setLikeCount(prev => prev + 1);
-        setLiked(true);
+        await postLikes(puzzleId)
+        setLikeCount(prev => prev + 1)
+        setLiked(true)
       }
     } catch (error) {
-      console.error('좋아요 처리 중 오류 발생:', error);
-      alert('좋아요 처리 중 문제가 발생했습니다.');
+      console.error('좋아요 처리 중 오류 발생:', error)
+      alert('좋아요 처리 중 문제가 발생했습니다.')
       // 실패 시 상태를 원래대로 되돌립니다
-      setLiked(prev => !prev);
-      setLikeCount(prev => liked ? prev + 1 : prev - 1);
+      setLiked(prev => !prev)
+      setLikeCount(prev => liked ? prev + 1 : prev - 1)
     }
   };
 

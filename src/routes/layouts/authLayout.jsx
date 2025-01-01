@@ -1,10 +1,9 @@
-import { Outlet } from "react-router-dom"
-import Header from "../../components/Header"
+import { Outlet } from 'react-router-dom';
 
 export default function AuthLayout() {
-  return(
-    <main className="container mx-auto px-4 py-8">
+  return (
+    <div className="container mx-auto px-4 py-8">
       <Outlet />
-    </main>
-  )
+    </div>
+  );
 }
