@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
-import { useLoaderData } from "react-router-dom";
+import { useOutletContext } from "react-router-dom";
 
 export default function Profile() {
-  const loaderData = useLoaderData();
+  const outletData = useOutletContext()
   const [username, setUsername] = useState(null);
 
   useEffect(() => {
-    const username = loaderData?.username
+    const username = outletData?.username
     if (username) {
       setUsername(username);
     }
-  }, [loaderData, outletData]);
+  }, [outletData]);
 
   return (
     <div className="space-y-8">

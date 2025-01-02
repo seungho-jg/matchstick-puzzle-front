@@ -1,9 +1,36 @@
 import { useState, useEffect } from "react"
 import { getLikes, postLikes, removeLikes } from '../api/api-like'
+import useAuthStore from "../store/authStore"
 
 export default function LikeButton({ puzzleId, likes: initialLikes }) {
   const [liked, setLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(initialLikes)
+  const [isLoading, setIsLoading] = useState(false)
+  const token = useAuthStore((state) => state.token)  // 로그인 상태 확인
+
+  // 컴포넌트 마운트 시 좋아요 상태 확인
+  useEffect(() => {
+    const checkLikeStatus = async () => {
+      // token과 puzzleId가 모두 있을 때만 요청
+      if (!token || !puzzleId) {
+        setIsLoading(false);
+        return;
+      }
+      try{
+        setIsLoading(true)
+        const { isLiked } = await getLikes(puzzleId)
+        console.log('puzzleId:', puzzleId, 'type:', typeof puzzleId)
+        setLiked(isLiked)
+      } catch (error) {
+        console.error('Failed to check like status:', error)
+        setLiked(false)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    checkLikeStatus()
+  }, [puzzleId])
 
   useEffect(() => {
     setLikeCount(initialLikes)
@@ -11,6 +38,10 @@ export default function LikeButton({ puzzleId, likes: initialLikes }) {
 
   
   const handleLike = async () => {
+    if (!token) {
+      alert('로그인이 필요합니다.')
+      return
+    }
     try {
       if (liked) {
         await removeLikes(puzzleId)
@@ -22,11 +53,11 @@ export default function LikeButton({ puzzleId, likes: initialLikes }) {
         setLiked(true)
       }
     } catch (error) {
-      console.error('좋아요 처리 중 오류 발생:', error)
-      alert('좋아요 처리 중 문제가 발생했습니다.')
-      // 실패 시 상태를 원래대로 되돌립니다
-      setLiked(prev => !prev)
-      setLikeCount(prev => liked ? prev + 1 : prev - 1)
+        console.error('좋아요 처리 중 오류 발생:', error)
+        alert('좋아요 처리 중 문제가 발생했습니다.')
+        // 실패 시 상태를 원래대로 되돌립니다
+        setLiked(prev => !prev)
+        setLikeCount(prev => liked ? prev + 1 : prev - 1)
     }
   };
 
@@ -34,7 +65,10 @@ export default function LikeButton({ puzzleId, likes: initialLikes }) {
     <div className="flex flex-row items-center">
       <button 
         onClick={handleLike}
-        className="text-red-500 hover:text-red-600 transition-colors"
+        disabled={isLoading}
+        className={`text-red-500 hover:text-red-600 transition-colors
+          ${isLoading ? 'cursor-not-allowed' : ''}
+          `}
       >
         {liked 
           ? <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">

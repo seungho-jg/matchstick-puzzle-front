@@ -1,8 +1,8 @@
-const API_BASE_URL = 'http://localhost:3000/auth'
+const API_BASE_URL = 'http://localhost:3000'
 
 // 회원가입
 export async function fetchRegister(formData) {
-  const response = await fetch(`${API_BASE_URL}/register`, {
+  const response = await fetch(`${API_BASE_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(formData),
@@ -15,7 +15,7 @@ export async function fetchRegister(formData) {
 
 // 로그인
 export async function fetchLogin(formData) {
-  const response = await fetch(`${API_BASE_URL}/login`, {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(formData),
