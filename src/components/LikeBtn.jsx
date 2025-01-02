@@ -11,14 +11,15 @@ export default function LikeButton({ puzzleId, likes: initialLikes }) {
   // 컴포넌트 마운트 시 좋아요 상태 확인
   useEffect(() => {
     const checkLikeStatus = async () => {
-      // 로그인하지 않은 경우 체크하지 않음
-      if (!token) {
-        setIsLoading(false)
-        return
+      // token과 puzzleId가 모두 있을 때만 요청
+      if (!token || !puzzleId) {
+        setIsLoading(false);
+        return;
       }
       try{
         setIsLoading(true)
         const { isLiked } = await getLikes(puzzleId)
+        console.log('puzzleId:', puzzleId, 'type:', typeof puzzleId)
         setLiked(isLiked)
       } catch (error) {
         console.error('Failed to check like status:', error)
