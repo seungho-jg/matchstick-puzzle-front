@@ -8,7 +8,6 @@ export async function getLikes(puzzleId) {
     const response = await fetch(`${API_BASE_URL}/puzzles/${puzzleId}/likes`, {
       method: 'GET',
       headers: { 
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
     })

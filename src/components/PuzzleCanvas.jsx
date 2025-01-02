@@ -1,11 +1,12 @@
 import { useRef, useEffect, useState, Fragment } from "react"
 import { Stage, Layer, Transformer, Text } from "react-konva"
 import Matchstick from "./Matchstick"
-import {checkRemoveSimilarity, checkMoveSimilarity } from "../utils/calculator"
 import ResultModal from "./ResultModal"
 import LikeButton from "./LikeBtn"
+import useAuthStore from "../store/authStore"
 
 export default function PuzzleCanvas({ puzzleData }) {
+  const { token } = useAuthStore()
   // 게임 초기 데이터
   const [initMatchstick, setInitMatchstick] = useState([])
   const [matchsticks, setMatchsticks] = useState([])
@@ -274,11 +275,6 @@ export default function PuzzleCanvas({ puzzleData }) {
     }
   };
 
-  // 좋아요 증가 핸들러
-  const handleLike = () => {
-    setLikes((prev) => prev + 1);
-  };
-
   const handleRemove = () => {
     if (gameType !== "remove") {
       alert("삭제할 수 없습니다.")
@@ -308,32 +304,50 @@ export default function PuzzleCanvas({ puzzleData }) {
       setSelectedMatchstick(null)
     }
   }
-  const handleCheckAnswer = () => {
-    const solution = JSON.parse(puzzleData.solution)
-    let isCorrect = false;
-    
-    if (gameType === "move") {
-      isCorrect = checkMoveSimilarity(matchsticks, solution, 10)
-    } else if (gameType === "remove") {
-      isCorrect = checkRemoveSimilarity(moveCounts, solution, limit)
-    }
-    if (isCorrect) {
+  const handleCheckAnswer = async () => {
+    try {
+      const roundedMatchsticks = matchsticks.map(stick => ({
+        ...stick,
+        x: Math.round(stick.x),
+        y: Math.round(stick.y),
+        angle: Math.round(stick.angle)
+      }));
+
+      const response = await fetch(`http://localhost:3000/puzzles/${puzzleData.id}/solve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(roundedMatchsticks)
+      });
+      const result = await response.json();
+      console.log('Solve result:', result);
+
       setModalContent({
-        message: "정답입니다!",
+        message: result.success ? 
+          `정답입니다! (획득 경험치: ${result.expBonus})` : 
+          "오답입니다.",
         buttons: [
           { label: "확인", onClick: () => setIsModalOpen(false) }
         ],
       });
-    } else {
+      setIsModalOpen(true);
+
+      if (result.levelUp) {
+        alert(`축하합니다! 레벨 ${result.newLevel}이 되었습니다!`);
+      }
+    } catch (error) {
+      console.error('Error checking answer:', error);
       setModalContent({
-        message: "오답입니다.",
+        message: "오류가 발생했습니다.",
         buttons: [
           { label: "확인", onClick: () => setIsModalOpen(false) }
         ],
       });
+      setIsModalOpen(true);
     }
-    setIsModalOpen(true)
-  }
+  };
   
   useEffect(() => {
     const updateStageSize = () => {
@@ -423,7 +437,7 @@ export default function PuzzleCanvas({ puzzleData }) {
             <LikeButton likes={puzzleData?._count.likes} puzzleId={puzzleData?.id}/>
           </div>
           <div className="-translate-x-4 font-serif text-stone-500">
-            createdBy @seungho
+            createdBy @{puzzleData?.createBy}
           </div>
         </div>
       </div>
