@@ -79,7 +79,7 @@ export default function LikeButton({ puzzleId, likes: initialLikes }) {
             </svg>
         }
       </button>
-      <span className="font-mono text-gray-700 ml-1">{likeCount} Likes</span>
+      <span className="font-mono text-gray-700 ml-1 select-none pointer-events-none">{likeCount} Likes</span>
     </div>
   );
 }

@@ -44,7 +44,7 @@ export default function Header() {
               퍼즐 목록
             </Link>
             <Link
-              to="/ranking"
+              to="/leaderboard"
               className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium dark:text-gray-300 dark:hover:text-white"
             >
               랭킹
