@@ -4,9 +4,11 @@ import Matchstick from "./Matchstick"
 import ResultModal from "./ResultModal"
 import LikeButton from "./LikeBtn"
 import useAuthStore from "../store/authStore"
+import { useNavigate } from "react-router-dom"
 
 export default function PuzzleCanvas({ puzzleData }) {
   const { token } = useAuthStore()
+  const navigate = useNavigate()
   // 게임 초기 데이터
   const [initMatchstick, setInitMatchstick] = useState([])
   const [matchsticks, setMatchsticks] = useState([])
@@ -28,6 +30,8 @@ export default function PuzzleCanvas({ puzzleData }) {
   const transformerRef = useRef(null)
   const stageRef = useRef(null)
   const stageContainerRef = useRef(null)
+
+  const [isChecking, setIsChecking] = useState(false);  // 로딩 상태 추가
 
   const adjustCenter = () => {
     if (!stageContainerRef.current || !matchsticks.length) return
@@ -305,7 +309,21 @@ export default function PuzzleCanvas({ puzzleData }) {
     }
   }
   const handleCheckAnswer = async () => {
+    if(!token) {
+      setIsChecking(true)
+      setModalContent({
+        message : "로그인 후 정답을 확인해보세요.",
+        buttons: [
+          { label: "로그인", onClick: () => navigate('/login') }
+        ],
+      });
+      setIsModalOpen(true);
+      setTimeout(() => setIsChecking(false), 2000);
+      return;
+    }
     try {
+      setIsChecking(true);
+
       const roundedMatchsticks = matchsticks.map(stick => ({
         ...stick,
         x: Math.round(stick.x),
@@ -322,12 +340,13 @@ export default function PuzzleCanvas({ puzzleData }) {
         body: JSON.stringify(roundedMatchsticks)
       });
       const result = await response.json();
-      console.log('Solve result:', result);
 
       setModalContent({
-        message: result.success ? 
-          `정답입니다! (획득 경험치: ${result.expBonus})` : 
-          "오답입니다.",
+        message: result.alreadySolved ? 
+          result.message : 
+          result.success ? 
+            `정답입니다! (획득 경험치: ${result.expBonus})` : 
+            "오답입니다.",
         buttons: [
           { label: "확인", onClick: () => setIsModalOpen(false) }
         ],
@@ -346,6 +365,8 @@ export default function PuzzleCanvas({ puzzleData }) {
         ],
       });
       setIsModalOpen(true);
+    } finally {
+      setIsChecking(false);
     }
   };
   
@@ -377,13 +398,25 @@ export default function PuzzleCanvas({ puzzleData }) {
         />
       )}
       <div ref={stageContainerRef} className="relative stage-container w-full h-[70vh] bg-stone-200 rounded-3xl">
-        <div className="absolute w-full top-2 left-2 flex flex-row z-20">
+        <div className="absolute w-full top-2 left-2 flex flex-row z-20 pointer-events-none">
+          <div className="pointer-events-auto flex">
             <button className="hover:bg-stone-300 rounded-md px-2 py-1 disabled:opacity-35" onClick={reset} disabled={currentStep < 0}>⏮️</button>
             <button className="hover:bg-stone-300 rounded-md px-2 py-1 disabled:opacity-35" onClick={undo} disabled={currentStep < 0}>◀️</button>
             <button className="hover:bg-stone-300 rounded-md px-2 py-1 disabled:opacity-35" onClick={redo} disabled={currentStep >= history.length - 1}>▶️</button>
             {gameType !== "move" ? <button className="hover:bg-stone-300 rounded-md px-2 py-1 disabled:opacity-35" onClick={handleRemove} disabled={selectedMatchstick == null} >Remove</button> : null}
-            <button className="hover:bg-stone-300 rounded-md px-2 py-1 disabled:opacity-35" onClick={handleCheckAnswer} disabled={Object.keys(moveCounts).length !== limit}>✅</button>
-          <div className="absolute top-1.5 right-6 font-mono text-gray-500">Left : {limit - Object.keys(moveCounts).length}</div>
+            <button 
+              className={`hover:bg-stone-300 rounded-md px-2 py-1 disabled:opacity-35 relative`} 
+              onClick={handleCheckAnswer} 
+              disabled={Object.keys(moveCounts).length !== limit || isChecking}
+            >
+              {isChecking ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+              ) : '✅'}
+            </button>
+          </div>
+          <div className="absolute top-1.5 right-6 font-mono text-gray-500 select-none pointer-events-none">
+            Left : {limit - Object.keys(moveCounts).length}
+          </div>
         </div>
         <Stage
           ref={stageRef}
@@ -432,11 +465,11 @@ export default function PuzzleCanvas({ puzzleData }) {
             />
           </Layer>
         </Stage>
-        <div className="flex items-center justify-between gap-2 -translate-y-10 w-full">
-          <div className="translate-x-2">
+        <div className="flex items-center justify-between gap-2 -translate-y-10 w-full pointer-events-none">
+          <div className="translate-x-2 pointer-events-auto">
             <LikeButton likes={puzzleData?._count.likes} puzzleId={puzzleData?.id}/>
           </div>
-          <div className="-translate-x-4 font-serif text-stone-500">
+          <div className="-translate-x-4 font-serif text-stone-500 select-none">
             createdBy @{puzzleData?.createBy}
           </div>
         </div>

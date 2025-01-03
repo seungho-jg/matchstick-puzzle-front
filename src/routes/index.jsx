@@ -12,6 +12,7 @@ import NotFound from './pages/notfound'
 import RegisterPage from './pages/register'
 import LoginPage from './pages/login'
 import { authLoader } from './loaders/authLoader'
+import LeaderboardPage from './pages/\bleaderboard'
 
 // 로딩 컴포넌트 생성
 const LoadingFallback = () => (
@@ -37,6 +38,10 @@ const router = createBrowserRouter([
       {
         path: "login",
         element: <LoginPage />
+      },
+      {
+        path: "leaderboard",
+        element: <LeaderboardPage />
       },
       // 기본
       {
