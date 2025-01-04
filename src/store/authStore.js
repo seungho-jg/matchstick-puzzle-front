@@ -5,7 +5,10 @@ const useAuthStore = create(
   persist(
     (set) => ({
       token: null,
+      userRole: null,
       setToken: (token) => set({ token }),
+      setUserRole: (role) => set({ userRole: role }),
+      isAdmin: () => useAuthStore.getState().userRole === 'ADMIN',
       clearToken: () => set({ token: null }),
     }),
     {

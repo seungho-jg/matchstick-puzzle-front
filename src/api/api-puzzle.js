@@ -47,3 +47,22 @@ export async function createPuzzle(puzzleData) {
   }
   return response.json()
 }
+
+// 퍼즐 난이도 업데이트 (관리자용)
+export async function updatePuzzleDifficulty(puzzleId, difficulty) {
+  const token = useAuthStore.getState().token
+  const response = await fetch(`${API_BASE_URL}/admin/puzzle/${puzzleId}/difficulty`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ difficulty })
+  });
+
+  if (!response.ok) {
+    throw new Error('난이도 업데이트에 실패했습니다.');
+  }
+
+  return response.json();
+}

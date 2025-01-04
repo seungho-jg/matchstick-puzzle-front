@@ -5,9 +5,12 @@ import ResultModal from "./ResultModal"
 import LikeButton from "./LikeBtn"
 import useAuthStore from "../store/authStore"
 import { useNavigate } from "react-router-dom"
+import { updatePuzzleDifficulty } from '../api/api-puzzle';
+
+const DIFFICULTY_OPTIONS = ['EASY', 'NORMAL', 'HARD', 'EXTREME'];
 
 export default function PuzzleCanvas({ puzzleData }) {
-  const { token } = useAuthStore()
+  const { token, isAdmin } = useAuthStore()
   const navigate = useNavigate()
   // 게임 초기 데이터
   const [initMatchstick, setInitMatchstick] = useState([])
@@ -32,6 +35,7 @@ export default function PuzzleCanvas({ puzzleData }) {
   const stageContainerRef = useRef(null)
 
   const [isChecking, setIsChecking] = useState(false);  // 로딩 상태 추가
+  const [isUpdatingDifficulty, setIsUpdatingDifficulty] = useState(false);
 
   const adjustCenter = () => {
     if (!stageContainerRef.current || !matchsticks.length) return;
@@ -397,11 +401,67 @@ export default function PuzzleCanvas({ puzzleData }) {
     return () => window.removeEventListener("resize", updateStageSize)
   }, [])
 
+  const handleDifficultyChange = async (newDifficulty) => {
+    if (!isAdmin) return;
+    
+    try {
+      setIsUpdatingDifficulty(true);
+      const result = await updatePuzzleDifficulty(puzzleData.id, newDifficulty);
+      
+      setModalContent({
+        message: `난이도가 ${newDifficulty}로 변경되었습니다.`,
+        buttons: [{ label: "확인", onClick: () => setIsModalOpen(false) }],
+      });
+      setIsModalOpen(true);
+      
+      // puzzleData 업데이트
+      puzzleData.difficulty = result.difficulty;
+      puzzleData.difficultySetAt = result.difficultySetAt;
+
+    } catch (error) {
+      setModalContent({
+        message: error.message,
+        buttons: [{ label: "확인", onClick: () => setIsModalOpen(false) }],
+      });
+      setIsModalOpen(true);
+    } finally {
+      setIsUpdatingDifficulty(false);
+    }
+  };
+
   return (
     <>
     <div className="flex flex-row pl-2 gap-1 mt-2 items-center">
       <div className="text-neutral-800 pb-2 font-bold text-2xl">{puzzleData?.title}</div>
       <div className="scale-90 -translate-y-1 text-white text-sm font-bold bg-red-400 rounded-md px-2 h-fit w-fit">{puzzleData?._count.attemptedByUsers > 0 ? ` ${puzzleData?._count.solvedByUsers/puzzleData?._count.attemptedByUsers*100}% ` : ''}</div>
+      {isAdmin && (
+        <div className="relative inline-block">
+          <select
+            value={puzzleData?.difficulty || 'Unrated'}
+            onChange={(e) => handleDifficultyChange(e.target.value)}
+            disabled={isUpdatingDifficulty}
+            className={`
+              ml-2 px-2 py-1 rounded-md text-sm font-medium
+              ${puzzleData?.difficulty === 'Unrated' ? 'bg-gray-200' : 
+                puzzleData?.difficulty === 'Easy' ? 'bg-green-200' :
+                puzzleData?.difficulty === 'Normal' ? 'bg-blue-200' :
+                puzzleData?.difficulty === 'Hard' ? 'bg-orange-200' :
+                'bg-red-200'}
+              hover:opacity-80 cursor-pointer disabled:cursor-not-allowed
+            `}
+          >
+            <option value="Unrated">난이도 설정</option>
+            {DIFFICULTY_OPTIONS.map((diff) => (
+              <option key={diff} value={diff}>{diff}</option>
+            ))}
+          </select>
+          {isUpdatingDifficulty && (
+            <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+              <div className="animate-spin h-4 w-4 border-2 border-blue-500 rounded-full border-t-transparent"></div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
     {isModalOpen && (
         <ResultModal
