@@ -38,7 +38,7 @@ export default function Header() {
           
           <nav className="flex items-center gap-3">
             <Link
-              to="/"
+              to="/puzzle"
               className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium dark:text-gray-300 dark:hover:text-white"
             >
               퍼즐 목록
@@ -71,6 +71,13 @@ export default function Header() {
                         onClick={() => setIsProfileMenuOpen(false)}
                       >
                         마이페이지
+                      </Link>
+                      <Link
+                        to="/account/create"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-600"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                      >
+                        퍼즐 만들기
                       </Link>
                       <button
                         onClick={handleLogout}

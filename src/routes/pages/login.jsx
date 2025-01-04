@@ -15,13 +15,13 @@ export default function LoginPage() {
 
   const onSubmit = async (data) => {
     try {
-      const response = await fetchLogin(data)
-      setToken(response.token)
-      console.log('로그인 성공!!')
+      const response = await fetchLogin(data);
+      setToken(response.token);
       navigate('/');
+      alert(response.message); // "로그인되었습니다." 메시지 표시
     } catch (error) {
-      console.error('Login error:', error); // 에러 상세 확인
-      alert(error.response?.data?.message || '로그인에 실패했습니다.');
+      // 백엔드에서 보내는 구체적인 에러 메시지 표시
+      alert(error.message || '로그인에 실패했습니다.');
     }
   };
 
@@ -41,6 +41,7 @@ export default function LoginPage() {
               type="email"
               id="email"
               name="email"
+              autoComplete="username email"
               placeholder="이메일을 입력하세요"
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
@@ -55,6 +56,7 @@ export default function LoginPage() {
               type="password"
               id="password"
               name="password"
+              autoComplete="current-password"
               placeholder="비밀번호를 입력하세요"
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm"
             />

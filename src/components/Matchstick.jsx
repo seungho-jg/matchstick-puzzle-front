@@ -1,7 +1,6 @@
 import { Image } from "react-konva";
 
-export default function Matchstick({ stick, image, isSelected, onSelect, onDragEnd, onTransformEnd, canMove }) {
-  // console.log(isSelected)
+export default function Matchstick({ stick, image, onSelect, onDragEnd, onTransformEnd, canMove, opacity }) {
   return (
     <Image
       id={stick.id}
@@ -9,6 +8,7 @@ export default function Matchstick({ stick, image, isSelected, onSelect, onDragE
       y={stick.y}
       rotation={stick.angle}
       width={18}
+      opacity={opacity}
       height={150}
       offset={{
         x: 9, // 이미지 폭의 절반

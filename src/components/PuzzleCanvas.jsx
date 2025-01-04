@@ -34,25 +34,34 @@ export default function PuzzleCanvas({ puzzleData }) {
   const [isChecking, setIsChecking] = useState(false);  // 로딩 상태 추가
 
   const adjustCenter = () => {
-    if (!stageContainerRef.current || !matchsticks.length) return
+    if (!stageContainerRef.current || !matchsticks.length) return;
     
-    const stageContainer = stageContainerRef.current.getBoundingClientRect()
-    const stageWidth = stageContainer.width
-    const stageHeight = stageContainer.height
+    const stageContainer = stageContainerRef.current.getBoundingClientRect();
+    const stageWidth = stageContainer.width;
+    const stageHeight = stageContainer.height;
     
-    // 성냥의 바운딩 박스 계산
-    const minX = Math.min(...matchsticks.map((stick) => stick.x))
-    const maxX = Math.max(...matchsticks.map((stick) => stick.x))
-    const minY = Math.min(...matchsticks.map((stick) => stick.y))
-    const maxY = Math.max(...matchsticks.map((stick) => stick.y))
+    // 성냥개비가 1개일 때는 기본 여백 추가
+    const padding = 50;
+    
+    // 바운딩 박스 계산
+    const minX = Math.min(...matchsticks.map((stick) => stick.x));
+    const maxX = Math.max(...matchsticks.map((stick) => stick.x));
+    const minY = Math.min(...matchsticks.map((stick) => stick.y));
+    const maxY = Math.max(...matchsticks.map((stick) => stick.y));
 
-    const boundingWidth = maxX - minX
-    const boundingHeight = maxY - minY
+    // 성냥개비가 1-2개일 때는 바운딩 박스에 패딩 추가
+    const boundingWidth = matchsticks.length <= 2 ? 
+      Math.max(maxX - minX, 100) + padding * 2 : 
+      maxX - minX;
+    
+    const boundingHeight = matchsticks.length <= 2 ? 
+      Math.max(maxY - minY, 100) + padding * 2 : 
+      maxY - minY;
 
     // 스테이지 스케일 계산
     const scaleX = stageWidth / boundingWidth;
-    const scaleY = stageHeight / boundingHeight;
-    const newScale = Math.min(scaleX, scaleY) * 0.77 // 여백을 위해 0.77 배율 추가
+    const scaleY = stageHeight / boundingHeight * 0.7;
+    const newScale = Math.min(scaleX, scaleY) * 0.77; // 여백
 
     const stageCenter = {
       x: stageWidth / 2,
@@ -61,7 +70,7 @@ export default function PuzzleCanvas({ puzzleData }) {
     
     const matchsticksCenter = {
       x: (minX + maxX) / 2,
-      y: (minY + maxY) / 2,
+      y: (minY + maxY) / 2.1,
     };
     
     const newOffset = {
@@ -69,18 +78,19 @@ export default function PuzzleCanvas({ puzzleData }) {
       y: stageCenter.y - matchsticksCenter.y * newScale,
     };
 
-    setScale(newScale); // 스케일 업데이트
+    setScale(newScale);
 
     setMatchsticks(prev => prev.map(stick => ({
       ...stick,
-      x: stick.x + newOffset.x,
-      y: stick.y + newOffset.y,
+      x: stick.x + newOffset.x / newScale,
+      y: stick.y + newOffset.y / newScale,
     })));
+    
     setInitMatchstick(prev => prev.map(stick => ({
       ...stick,
-      x: stick.x + newOffset.x,
-      y: stick.y + newOffset.y,
-    })))
+      x: stick.x + newOffset.x / newScale,
+      y: stick.y + newOffset.y / newScale,
+    })));
   };
   // JSON 데이터 로드
   useEffect(()=>{
@@ -389,7 +399,10 @@ export default function PuzzleCanvas({ puzzleData }) {
 
   return (
     <>
-    <div className="pt-5 text-neutral-800 pl-2 pb-2 font-bold text-2xl">{puzzleData?.title}</div>
+    <div className="flex flex-row pl-2 gap-1 mt-2 items-center">
+      <div className="text-neutral-800 pb-2 font-bold text-2xl">{puzzleData?.title}</div>
+      <div className="scale-90 -translate-y-1 text-white text-sm font-bold bg-red-400 rounded-md px-2 h-fit w-fit">{puzzleData?._count.attemptedByUsers > 0 ? ` ${puzzleData?._count.solvedByUsers/puzzleData?._count.attemptedByUsers*100}% ` : ''}</div>
+    </div>
     {isModalOpen && (
         <ResultModal
           message={modalContent.message}
@@ -436,21 +449,20 @@ export default function PuzzleCanvas({ puzzleData }) {
                     key={stick.id}
                     stick={stick}
                     image={imageRef.current}
-                    isSelected={stick.id === selectedMatchstick}
                     onSelect={handleSelect}
                     onDragEnd={handleDragEnd}
                     onTransformEnd={handleRotateEnd}
                     canMove={gameType === "move"}
                   />
                   {/* 성냥개비 위에 id를 표시 */}
-                  <Text
+                  {/* <Text
                     x={stick.x} // Rect의 중심 위에 배치
                     y={stick.y } // Rect의 위쪽에 배치
                     text={stick.id}
                     fontSize={14}
                     fill="black"
                     align="center"
-                  />
+                  /> */}
                 </Fragment>
             ))}
             {/* Transformer */}
@@ -470,10 +482,11 @@ export default function PuzzleCanvas({ puzzleData }) {
             <LikeButton likes={puzzleData?._count.likes} puzzleId={puzzleData?.id}/>
           </div>
           <div className="-translate-x-4 font-serif text-stone-500 select-none">
-            createdBy @{puzzleData?.createBy}
+            createdBy @{puzzleData?.createBy.username}
           </div>
         </div>
       </div>
+      <div className="text-neutral-800 text-sm font-bold mt-2 ml-2">[성공: {puzzleData?._count.solvedByUsers} / 시도: {puzzleData?._count.attemptedByUsers}명]</div>
     </>
   )
 }

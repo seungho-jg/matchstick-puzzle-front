@@ -1,6 +1,11 @@
 import { z } from 'zod'
 
-const forbidenUserNameList = [ "seungho", "tmdgh", "승호"]
+const forbidenUserNameList = [
+  "anal", "anus", "asshole", "bastard", "bitch", "boob", "cock", "cunt", "dick", "fuck", 
+  "hell", "idiot", "jerk", "penis", "pussy", "sex", "shit", "slut", "stupid", "vagina",
+  "admin", "administrator", "system", "root", "master", "manager", "staff", "support",
+  "test", "guest", "anonymous", "undefined", "null", "좆", "섹스", "씨발",
+]
 
 const checkUserName = (username)  => {
   const result = forbidenUserNameList.some((keyword)=>
