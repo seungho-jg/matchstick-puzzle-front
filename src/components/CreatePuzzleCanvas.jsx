@@ -4,6 +4,8 @@ import Matchstick from './Matchstick';
 import { v4 as uuidv4 } from 'uuid';
 import { createPuzzle } from '../api/api-puzzle';
 import { useNavigate } from 'react-router-dom';
+import { getPuzzleCreateCount } from '../api/api-user';
+import useAuthStore from '../store/authStore';
 
 export default function CreatePuzzleCanvas() {
   const navigate = useNavigate();
@@ -18,7 +20,7 @@ export default function CreatePuzzleCanvas() {
 
   const [currentMathchstick, setCurrentMatchstick] = useState([]);
   const [initialMathchstick, setInitialMatchstick] = useState([]);
-  const [solutions, setSolutions] = useState([[]]);  // 복수의 정답을 위한 배열
+  const [solutions, setSolutions] = useState([[]]);  // 정답 1 슬롯으로 시작
   const [currentSolutionIndex, setCurrentSolutionIndex] = useState(0);
   const [selectedMatchstick, setSelectedMatchstick] = useState(null);
   const [isInitialStateConfirmed, setIsInitialStateConfirmed] = useState(false);
@@ -31,6 +33,8 @@ export default function CreatePuzzleCanvas() {
   const transformerRef = useRef(null)
   const stageContainerRef = useRef(null);
 
+  const puzzleCreateCount = useAuthStore((state) => state.puzzleCreateCount);
+  const setPuzzleCreateCount = useAuthStore((state) => state.setPuzzleCreateCount);
   // 이미지 로드
   useEffect(() => {
     const img = new window.Image();
@@ -40,7 +44,20 @@ export default function CreatePuzzleCanvas() {
     };
   }, []);
 
-
+  // 퍼즐 생성 카운트 조회
+  useEffect(() => {
+    const fetchPuzzleCreateCount = async () => {
+      try {
+        const response = await getPuzzleCreateCount();
+        // response에서 puzzleCreateCount 값만 추출
+        setPuzzleCreateCount(response.puzzleCreateCount);
+      } catch (error) {
+        console.error('퍼즐 생성 카운트 조회 실패:', error);
+      }
+    };
+    
+    fetchPuzzleCreateCount();
+  }, []);
 
   // 성냥개비 추가
   const handleAdd = () => {
@@ -120,15 +137,52 @@ export default function CreatePuzzleCanvas() {
     setIsInitialStateConfirmed(false);
   }
 
-  // 새로운 정답 추가
+  // 새로운 정답 추가 또는 변경
   const handleAddSolution = () => {
     if (Object.keys(moveCounts).length === 0) {
       alert("이동한 성냥개비가 없습니다.")
       return
     }
-    setSolutions(prev => [...prev, currentMathchstick.map(stick => ({ ...stick }))]);
-    setCurrentSolutionIndex(prev => prev + 1);
-    setCurrentMatchstick(initialMathchstick.map(stick => ({ ...stick , id: stick.id.replace('initial-', '')})));
+
+    setSolutions(prev => {
+      const newSolutions = [...prev];
+      
+      if (currentSolutionIndex < newSolutions.length) {
+        // 기존 슬롯 변경
+        newSolutions[currentSolutionIndex] = currentMathchstick.map(stick => ({ ...stick }));
+        return newSolutions;
+      } else {
+        // 새 슬롯 추가
+        return [...newSolutions, currentMathchstick.map(stick => ({ ...stick }))];
+      }
+    });
+
+    // 현재 상태를 초기 상태로 리셋하고 다음 슬롯으로 이동
+    if (currentSolutionIndex >= solutions.length) {
+      setCurrentMatchstick(initialMathchstick.map(stick => ({ 
+        ...stick, 
+        id: stick.id.replace('initial-', '')
+      })));
+      setMoveCounts({});
+      setCurrentSolutionIndex(currentSolutionIndex + 1);
+    }
+  };
+
+  // 솔루션 변경 시
+  const handleSolutionChange = (e) => {
+    const newIndex = Number(e.target.value);
+    setCurrentSolutionIndex(newIndex);
+    
+    if (solutions[newIndex] && solutions[newIndex].length > 0) {
+      // 기존 솔루션 상태로 변경
+      setCurrentMatchstick(solutions[newIndex].map(stick => ({ ...stick })));
+    } else {
+      // 새 슬롯의 경우 초기 상태로 설정
+      setCurrentMatchstick(initialMathchstick.map(stick => ({ 
+        ...stick, 
+        id: stick.id.replace('initial-', '')
+      })));
+    }
     setMoveCounts({});
   };
 
@@ -142,6 +196,11 @@ export default function CreatePuzzleCanvas() {
 
   // 퍼즐 제출
   const handleSubmit = async () => {
+    if (puzzleCreateCount <= 0) {
+      alert('퍼즐 생성 횟수가 부족합니다.');
+      return;
+    }
+
     const puzzleData = {
       title,
       gameType,
@@ -156,11 +215,12 @@ export default function CreatePuzzleCanvas() {
 
     try {
       await createPuzzle(puzzleData);
-      alert('퍼즐이 성공적으로 생성되었습니다!');
+      setPuzzleCreateCount(prev => prev - 1);
+      alert(`퍼즐이 성공적으로 생성되었습니다! (craft coin: ${puzzleCreateCount - 1})`);
       navigate('/');
     } catch (error) {
       console.error('퍼즐 생성 실패:', error);
-      alert('퍼즐 생성에 실패했습니다.');
+      alert(error.message || '퍼즐 생성에 실패했습니다.');
     }
   };
 
@@ -435,18 +495,20 @@ export default function CreatePuzzleCanvas() {
           <div className="space-x-2">
             <select
               value={currentSolutionIndex}
-              onChange={e => setCurrentSolutionIndex(Number(e.target.value))}
+              onChange={handleSolutionChange}
               className="p-2 border rounded"
             >
-              {solutions.map((_, index) => (
-                <option key={index} value={index}>정답 {index + 1}</option>
+              {[...Array(solutions.length + 1)].map((_, index) => (
+                <option key={index} value={index}>
+                  정답 {index + 1}
+                </option>
               ))}
             </select>
             <button 
               onClick={handleAddSolution}
               className="px-2 py-2 bg-blue-500 text-white rounded"
             >
-              추가
+              {currentSolutionIndex < solutions.length ? '변경' : '추가'}
             </button>
             <button 
               onClick={handleSubmit}
@@ -462,6 +524,10 @@ export default function CreatePuzzleCanvas() {
             </button>
           </div>
         )}
+      </div>
+
+      <div className="text-sm text-gray-600 mb-4">
+        남은 퍼즐 생성 횟수: {puzzleCreateCount ?? '로딩 중...'}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import useAuthStore from "../store/authStore"
+import { getPuzzleCreateCount } from "../api/api-user"
 
 export default function Header() {
   const token = useAuthStore((state) => state.token)
@@ -8,11 +9,13 @@ export default function Header() {
   const [dark, setDark] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const navigate = useNavigate()
-
+  const puzzleCreateCount = useAuthStore((state) => state.puzzleCreateCount);
+  
   const darkModeHandler = () => {
     setDark(!dark)
     document.body.classList.toggle("dark");
   };
+
 
   const handleLogout = () => {
     clearToken()
@@ -72,13 +75,18 @@ export default function Header() {
                       >
                         마이페이지
                       </Link>
-                      <Link
-                        to="/account/create"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-600"
-                        onClick={() => setIsProfileMenuOpen(false)}
-                      >
+                      <div className="flex flex-row items-center">
+                        <Link
+                          to="/account/create"
+                          className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-600"
+                          onClick={() => setIsProfileMenuOpen(false)}
+                        >
                         퍼즐 만들기
-                      </Link>
+                        </Link>
+                        <div className="absolute right-2 text-xs font-bold text-gray-500 px-2 rounded-full bg-yellow-100 p-1">
+                          {puzzleCreateCount} left
+                        </div>
+                      </div>
                       <button
                         onClick={handleLogout}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-600"

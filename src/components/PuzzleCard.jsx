@@ -111,7 +111,7 @@ export default function PuzzleCard({ puzzle }) {
       >
         <div className="z-30 absolute flex flex-row gap-1 pl-2 mt-2 items-center">
           {isNew() && <div className="animate-pulse text-white text-sm font-bold bg-blue-400 rounded-md px-2 py-0.5">NEW</div>}
-          {_count?.attemptedByUsers > 0 && <div className="text-white text-sm font-bold bg-red-400 rounded-md px-2 py-0.5">{` ${_count?.solvedByUsers/_count?.attemptedByUsers*100}% `}</div>}
+          {_count?.attemptedByUsers > 0 && <div className="text-white text-sm font-bold bg-red-400 rounded-md px-2 py-0.5">{` ${Math.round(_count?.solvedByUsers/_count?.attemptedByUsers*100)}% `}</div>}
         </div>
         <Stage
           width={containerRef.current?.offsetWidth || 300}

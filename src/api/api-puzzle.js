@@ -31,6 +31,24 @@ export async function deletePuzzle(id) {
   }
 }
 
+// 퍼즐 제거 (관리자 전용)
+export async function deletePuzzleAdmin(puzzleId) {
+  const token = useAuthStore.getState().token;
+  const response = await fetch(`${API_BASE_URL}/admin/puzzles/${puzzleId}`, {  // URL 경로 수정
+    method: 'DELETE',
+    headers: { 
+      'Authorization': `Bearer ${token}`,
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || '퍼즐 삭제에 실패했습니다.');
+  }
+
+  return response.json();
+}
+
 // 퍼즐 생성
 export async function createPuzzle(puzzleData) {
   const token = useAuthStore.getState().token

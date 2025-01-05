@@ -34,3 +34,19 @@ export async function fetchUserAll() {
   }
   return response.json()
 }
+
+// 퍼즐 생성 카운트 조회
+export const getPuzzleCreateCount = async () => {
+  const token = useAuthStore.getState().token;
+  const response = await fetch(`${API_BASE_URL}/users/puzzle-create-count`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error('퍼즐 생성 카운트 조회에 실패했습니다.');
+  }
+
+  return response.json();
+};

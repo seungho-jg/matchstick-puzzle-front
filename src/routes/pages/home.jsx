@@ -1,10 +1,21 @@
 import { useEffect, useState } from 'react'
 import PuzzleCard from '../../components/PuzzleCard'
 import { fetchAllPuzzles } from '../../api/api-puzzle';
+import { getPuzzleCreateCount } from '../../api/api-user';
+import useAuthStore from '../../store/authStore';
 
 export default function Home() {
   const [puzzles, setPuzzles] = useState([])
   const [error, setError] = useState(null);
+  const setPuzzleCreateCount = useAuthStore((state) => state.setPuzzleCreateCount);
+
+  useEffect(() => {
+    const fetchPuzzleCreateCount = async () => {
+      const count = await getPuzzleCreateCount();
+      setPuzzleCreateCount(count.puzzleCreateCount);
+    };
+    fetchPuzzleCreateCount();
+  }, []);
 
   useEffect(() => {
     async function loadPuzzles() {

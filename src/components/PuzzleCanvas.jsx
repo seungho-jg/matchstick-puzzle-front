@@ -5,7 +5,7 @@ import ResultModal from "./ResultModal"
 import LikeButton from "./LikeBtn"
 import useAuthStore from "../store/authStore"
 import { useNavigate } from "react-router-dom"
-import { updatePuzzleDifficulty } from '../api/api-puzzle';
+import { updatePuzzleDifficulty, deletePuzzleAdmin } from '../api/api-puzzle';
 
 const DIFFICULTY_OPTIONS = ['EASY', 'NORMAL', 'HARD', 'EXTREME'];
 
@@ -45,7 +45,7 @@ export default function PuzzleCanvas({ puzzleData }) {
     const stageHeight = stageContainer.height;
     
     // 성냥개비가 1개일 때는 기본 여백 추가
-    const padding = 50;
+    const padding = 25;
     
     // 바운딩 박스 계산
     const minX = Math.min(...matchsticks.map((stick) => stick.x));
@@ -56,16 +56,16 @@ export default function PuzzleCanvas({ puzzleData }) {
     // 성냥개비가 1-2개일 때는 바운딩 박스에 패딩 추가
     const boundingWidth = matchsticks.length <= 2 ? 
       Math.max(maxX - minX, 100) + padding * 2 : 
-      maxX - minX;
+      maxX - minX + padding;
     
     const boundingHeight = matchsticks.length <= 2 ? 
       Math.max(maxY - minY, 100) + padding * 2 : 
-      maxY - minY;
+      maxY - minY + padding;
 
     // 스테이지 스케일 계산
     const scaleX = stageWidth / boundingWidth;
-    const scaleY = stageHeight / boundingHeight * 0.7;
-    const newScale = Math.min(scaleX, scaleY) * 0.77; // 여백
+    const scaleY = stageHeight / boundingHeight;
+    const newScale = Math.min(scaleX, scaleY) * 0.6; // 여백
 
     const stageCenter = {
       x: stageWidth / 2,
@@ -429,11 +429,26 @@ export default function PuzzleCanvas({ puzzleData }) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!isAdmin) return;
+
+    const confirmed = window.confirm('정말로 이 퍼즐을 삭제하시겠습니까?');
+    if (!confirmed) return;
+
+    try {
+      await deletePuzzleAdmin(puzzleData.id);
+      navigate('/puzzle'); // 퍼즐 목록으로 이동
+      alert('퍼즐이 삭제되었습니다.');
+    } catch (error) {
+      alert(error.message || '퍼즐 삭제에 실패했습니다.');
+    }
+  };
+
   return (
     <>
     <div className="flex flex-row pl-2 gap-1 mt-2 items-center">
       <div className="text-neutral-800 pb-2 font-bold text-2xl">{puzzleData?.title}</div>
-      <div className="scale-90 -translate-y-1 text-white text-sm font-bold bg-red-400 rounded-md px-2 h-fit w-fit">{puzzleData?._count.attemptedByUsers > 0 ? ` ${puzzleData?._count.solvedByUsers/puzzleData?._count.attemptedByUsers*100}% ` : ''}</div>
+      <div className="scale-90 -translate-y-1 text-white text-sm font-bold bg-red-400 rounded-md px-2 py-1 ">정답률 {puzzleData?._count.attemptedByUsers > 0 ? ` ${Math.round(puzzleData?._count.solvedByUsers/puzzleData?._count.attemptedByUsers*100)}% ` : ''}</div>
       {isAdmin && (
         <div className="relative inline-block">
           <select
@@ -460,6 +475,12 @@ export default function PuzzleCanvas({ puzzleData }) {
               <div className="animate-spin h-4 w-4 border-2 border-blue-500 rounded-full border-t-transparent"></div>
             </div>
           )}
+          <button
+                onClick={handleDelete}
+                className="ml-2 px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                삭제
+          </button>
         </div>
       )}
     </div>

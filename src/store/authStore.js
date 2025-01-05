@@ -6,8 +6,10 @@ const useAuthStore = create(
     (set) => ({
       token: null,
       userRole: null,
+      puzzleCreateCount: null,
       setToken: (token) => set({ token }),
       setUserRole: (role) => set({ userRole: role }),
+      setPuzzleCreateCount: (count) => set({ puzzleCreateCount: count }),
       isAdmin: () => useAuthStore.getState().userRole === 'ADMIN',
       clearToken: () => set({ token: null }),
     }),
