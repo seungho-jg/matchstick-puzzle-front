@@ -26,7 +26,7 @@ export default function PuzzleCard({ puzzle }) {
     if (!containerRef.current || !matchsticks.length) return;
 
     const container = containerRef.current.getBoundingClientRect();
-    const padding = 1;
+    const padding = 10;
     
     // 바운딩 박스 계산
     const minX = Math.min(...matchsticks.map((stick) => stick.x));
@@ -46,7 +46,7 @@ export default function PuzzleCard({ puzzle }) {
     // 스케일 계산
     const scaleX = container.width / boundingWidth;
     const scaleY = container.height / boundingHeight;
-    const newScale = Math.min(scaleX, scaleY) * 0.5;
+    const newScale = Math.min(scaleX, scaleY) * 0.7;
 
     setScale(newScale);
     

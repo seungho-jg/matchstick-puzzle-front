@@ -5,13 +5,15 @@ import ResultModal from "./ResultModal"
 import LikeButton from "./LikeBtn"
 import useAuthStore from "../store/authStore"
 import { useNavigate } from "react-router-dom"
-import { updatePuzzleDifficulty, deletePuzzleAdmin } from '../api/api-puzzle';
+import { updatePuzzleDifficulty, deletePuzzleAdmin, fetchSolvePuzzle } from '../api/api-puzzle';
 
 const DIFFICULTY_OPTIONS = ['EASY', 'NORMAL', 'HARD', 'EXTREME'];
 
 export default function PuzzleCanvas({ puzzleData }) {
-  const { token, isAdmin } = useAuthStore()
+  const { token } = useAuthStore()
   const navigate = useNavigate()
+  const isAdmin = useAuthStore((state) => state.isAdmin())
+
   // 게임 초기 데이터
   const [initMatchstick, setInitMatchstick] = useState([])
   const [matchsticks, setMatchsticks] = useState([])
@@ -44,8 +46,8 @@ export default function PuzzleCanvas({ puzzleData }) {
     const stageWidth = stageContainer.width;
     const stageHeight = stageContainer.height;
     
-    // 성냥개비가 1개일 때는 기본 여백 추가
-    const padding = 25;
+    const PADDING = 20;
+    const SCALE_MULTIPLE = 0.65;
     
     // 바운딩 박스 계산
     const minX = Math.min(...matchsticks.map((stick) => stick.x));
@@ -55,17 +57,27 @@ export default function PuzzleCanvas({ puzzleData }) {
 
     // 성냥개비가 1-2개일 때는 바운딩 박스에 패딩 추가
     const boundingWidth = matchsticks.length <= 2 ? 
-      Math.max(maxX - minX, 100) + padding * 2 : 
-      maxX - minX + padding;
+      Math.max(maxX - minX, 100) + PADDING * 2 : 
+      maxX - minX + PADDING;
     
     const boundingHeight = matchsticks.length <= 2 ? 
-      Math.max(maxY - minY, 100) + padding * 2 : 
-      maxY - minY + padding;
+      Math.max(maxY - minY, 100) + PADDING * 2 : 
+      maxY - minY + PADDING;
 
+    // 가로세로 비율 계산
+    const aspectRatio = boundingWidth / boundingHeight;
+    
     // 스테이지 스케일 계산
     const scaleX = stageWidth / boundingWidth;
     const scaleY = stageHeight / boundingHeight;
-    const newScale = Math.min(scaleX, scaleY) * 0.6; // 여백
+    
+    // 가로가 긴 경우 (aspectRatio > 1.5) scaleX를 우선적으로 고려
+    let newScale;
+    if (aspectRatio > 1.5) {
+      newScale = scaleX * SCALE_MULTIPLE * 1.4; // 가로가 긴 경우 20% 더 크게
+    } else {
+      newScale = Math.min(scaleX, scaleY) * SCALE_MULTIPLE;
+    }
 
     const stageCenter = {
       x: stageWidth / 2,
@@ -74,7 +86,7 @@ export default function PuzzleCanvas({ puzzleData }) {
     
     const matchsticksCenter = {
       x: (minX + maxX) / 2,
-      y: (minY + maxY) / 2.1,
+      y: (minY + maxY) / 2,
     };
     
     const newOffset = {
@@ -114,7 +126,7 @@ export default function PuzzleCanvas({ puzzleData }) {
   // 이미지 로드
   useEffect(() => {
     const img = new window.Image()
-    img.src = "/matchstick.webp" // 이미지 경로
+    img.src = "/matchstick2.webp" // 이미지 경로
     img.onload = () => {
       imageRef.current = img;
       setMatchsticks((sticks) => [...sticks])
@@ -345,15 +357,7 @@ export default function PuzzleCanvas({ puzzleData }) {
         angle: Math.round(stick.angle)
       }));
 
-      const response = await fetch(`http://localhost:3000/puzzles/${puzzleData.id}/solve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(roundedMatchsticks)
-      });
-      const result = await response.json();
+      const result = await fetchSolvePuzzle(puzzleData.id, roundedMatchsticks);
 
       setModalContent({
         message: result.alreadySolved ? 

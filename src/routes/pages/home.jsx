@@ -9,11 +9,16 @@ export default function Home() {
   const [error, setError] = useState(null);
   const setPuzzleCreateCount = useAuthStore((state) => state.setPuzzleCreateCount);
 
+  const fetchPuzzleCreateCount = async () => {
+    try {
+      const response = await getPuzzleCreateCount();
+      setPuzzleCreateCount(response.puzzleCreateCount);
+    } catch (error) {
+      console.error('퍼즐 생성 카운트 조회 실패:', error);
+    }
+  };
+
   useEffect(() => {
-    const fetchPuzzleCreateCount = async () => {
-      const count = await getPuzzleCreateCount();
-      setPuzzleCreateCount(count.puzzleCreateCount);
-    };
     fetchPuzzleCreateCount();
   }, []);
 

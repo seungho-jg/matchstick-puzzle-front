@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from "react-hook-form";
 import { loginSchema } from '../../validationSchemas';
 import { fetchLogin } from '../../api/api-auth';
-import useAuthStore from '../../store/authStore'; // zustand로 상태 관리
+import useAuthStore from '../../store/authStore';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -11,16 +11,15 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  const setToken = useAuthStore((state) => state.setToken) // zustand의 setToken 사용
-
-  const onSubmit = async (data) => {
+  const setToken = useAuthStore((state) => state.setToken);
+  const setUserInfo = useAuthStore((state) => state.setUserInfo);
+  const handleLogin = async (data) => {
     try {
       const response = await fetchLogin(data);
       setToken(response.token);
+      setUserInfo(response.user);
       navigate('/');
-      alert(response.message); // "로그인되었습니다." 메시지 표시
     } catch (error) {
-      // 백엔드에서 보내는 구체적인 에러 메시지 표시
       alert(error.message || '로그인에 실패했습니다.');
     }
   };
@@ -31,7 +30,7 @@ export default function LoginPage() {
         <h1 className="text-3xl font-bold text-gray-900 text-center">
           로그인
         </h1>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(handleLogin)} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               이메일

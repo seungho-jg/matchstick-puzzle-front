@@ -3,15 +3,15 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 
 const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       token: null,
-      userRole: null,
+      user: null,
       puzzleCreateCount: null,
       setToken: (token) => set({ token }),
-      setUserRole: (role) => set({ userRole: role }),
+      setUserInfo: (userInfo) => set({ user: userInfo }),
       setPuzzleCreateCount: (count) => set({ puzzleCreateCount: count }),
-      isAdmin: () => useAuthStore.getState().userRole === 'ADMIN',
-      clearToken: () => set({ token: null }),
+      isAdmin: () => get().user?.role === 'ADMIN',
+      clearToken: () => set({ token: null, user: null }),
     }),
     {
       name: 'auth-storage',

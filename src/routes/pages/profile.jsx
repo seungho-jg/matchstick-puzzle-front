@@ -12,6 +12,7 @@ export default function Profile() {
   const outletData = useOutletContext()
   const [username, setUsername] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
+  const [requiredExp, setRequiredExp] = useState(100);
 
   useEffect(() => {
     const username = outletData?.username
@@ -24,9 +25,14 @@ export default function Profile() {
     const getUserInfo = async () => {
       const userInfo = await fetchUserInfo()
       setUserInfo(userInfo)
+      // 데이터를 받아온 후 바로 다음 레벨 필요 경험치 계산
+      if (userInfo?.user?.level) {
+        const nextLevelExp = Math.floor(100 * Math.pow(1.2, userInfo.user.level));
+        setRequiredExp(nextLevelExp);
+      }
     }
     getUserInfo()
-  }, [])
+  }, [userInfo?.user?.level])
 
     const handleDeletePuzzle = async (e, puzzleId) => {
       e.preventDefault()
@@ -50,7 +56,7 @@ export default function Profile() {
           <div className="flex flex-row gap-2 items-center">
             <div className="text-sm text-gray-500">
               <span className="font-bold text-gray-900 text-md">Level {userInfo?.user.level} </span>
-                <span className="text-xs">({userInfo?.user.exp} / {getRequiredExp(userInfo?.user.level + 1)} XP)</span>
+                <span className="text-xs">({userInfo?.user.exp || 0} / {requiredExp} XP)</span>
               <div className="flex items-center gap-2">
                 <div className="w-32 h-2 bg-gray-200 rounded-full">
                   <div 

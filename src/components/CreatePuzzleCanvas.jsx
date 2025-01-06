@@ -124,6 +124,7 @@ export default function CreatePuzzleCanvas() {
   // 이동 횟수 체크
   const canMove = (id) => {
     if (!isInitialStateConfirmed) return true;  // 초기 상태에서는 모두 이동 가능
+    if (isInitialStateConfirmed && gameType === "remove") return false;
     if (moveCounts[id]) return true;  // 이미 이동한 성냥개비는 계속 이동 가능
     return Object.keys(moveCounts).length < limitcheck;  // 새로운 성냥개비는 limit 체크
   };
@@ -442,14 +443,14 @@ export default function CreatePuzzleCanvas() {
                       canMove={!isHandToolActive && canMove(stick.id)}
                     />
                     {/* 성냥개비 위에 id를 표시 */}
-                    <Text
+                    {/* <Text
                       x={stick.x-10} // Rect의 중심 위에 배치
                       y={stick.y } // Rect의 위쪽에 배치
                       text={stick.id}
                       fontSize={14}
                       fill="black"
                       align="center"
-                    />
+                    /> */}
                   </Fragment>
               ))}
               {/* Transformer */}

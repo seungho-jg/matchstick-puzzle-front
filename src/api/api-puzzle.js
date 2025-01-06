@@ -84,3 +84,20 @@ export async function updatePuzzleDifficulty(puzzleId, difficulty) {
 
   return response.json();
 }
+
+// 퍼즐 풀기
+export async function fetchSolvePuzzle(puzzleId, matchsticks) {
+  const token = useAuthStore.getState().token
+  const response = await fetch(`${API_BASE_URL}/puzzles/${puzzleId}/solve`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}` 
+    },
+    body: JSON.stringify(matchsticks)
+  })
+  if (!response.ok) {
+    throw new Error('Failed to solve the puzzle')
+  }
+  return response.json()
+}
