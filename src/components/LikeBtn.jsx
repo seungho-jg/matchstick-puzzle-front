@@ -19,7 +19,6 @@ export default function LikeButton({ puzzleId, likes: initialLikes }) {
       try{
         setIsLoading(true)
         const { isLiked } = await getLikes(puzzleId)
-        console.log('puzzleId:', puzzleId, 'type:', typeof puzzleId)
         setLiked(isLiked)
       } catch (error) {
         console.error('Failed to check like status:', error)

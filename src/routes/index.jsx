@@ -12,7 +12,9 @@ import NotFound from './pages/notfound'
 import RegisterPage from './pages/register'
 import LoginPage from './pages/login'
 import { authLoader } from './loaders/authLoader'
-import LeaderboardPage from './pages/\bleaderboard'
+import LeaderboardPage from './pages/leaderboard'
+import CreatePuzzleCanvas from '../components/CreatePuzzleCanvas'
+import PuzzleListPage from './pages/puzzleList'
 
 // 로딩 컴포넌트 생성
 const LoadingFallback = () => (
@@ -50,7 +52,7 @@ const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <Home /> // 임시
+            element: <PuzzleListPage /> 
           },
           {
             path: ":puzzleId",
@@ -68,6 +70,10 @@ const router = createBrowserRouter([
           {
             path: "profile",
             element: <Profile />,
+          },
+          {
+            path: "create",
+            element: <CreatePuzzleCanvas />
           }
         ]
       },

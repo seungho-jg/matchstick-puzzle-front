@@ -5,10 +5,15 @@ import ResultModal from "./ResultModal"
 import LikeButton from "./LikeBtn"
 import useAuthStore from "../store/authStore"
 import { useNavigate } from "react-router-dom"
+import { updatePuzzleDifficulty, deletePuzzleAdmin, fetchSolvePuzzle } from '../api/api-puzzle';
+
+const DIFFICULTY_OPTIONS = ['EASY', 'NORMAL', 'HARD', 'EXTREME'];
 
 export default function PuzzleCanvas({ puzzleData }) {
   const { token } = useAuthStore()
   const navigate = useNavigate()
+  const isAdmin = useAuthStore((state) => state.isAdmin())
+
   // 게임 초기 데이터
   const [initMatchstick, setInitMatchstick] = useState([])
   const [matchsticks, setMatchsticks] = useState([])
@@ -32,27 +37,47 @@ export default function PuzzleCanvas({ puzzleData }) {
   const stageContainerRef = useRef(null)
 
   const [isChecking, setIsChecking] = useState(false);  // 로딩 상태 추가
+  const [isUpdatingDifficulty, setIsUpdatingDifficulty] = useState(false);
 
   const adjustCenter = () => {
-    if (!stageContainerRef.current || !matchsticks.length) return
+    if (!stageContainerRef.current || !matchsticks.length) return;
     
-    const stageContainer = stageContainerRef.current.getBoundingClientRect()
-    const stageWidth = stageContainer.width
-    const stageHeight = stageContainer.height
+    const stageContainer = stageContainerRef.current.getBoundingClientRect();
+    const stageWidth = stageContainer.width;
+    const stageHeight = stageContainer.height;
     
-    // 성냥의 바운딩 박스 계산
-    const minX = Math.min(...matchsticks.map((stick) => stick.x))
-    const maxX = Math.max(...matchsticks.map((stick) => stick.x))
-    const minY = Math.min(...matchsticks.map((stick) => stick.y))
-    const maxY = Math.max(...matchsticks.map((stick) => stick.y))
+    const PADDING = 20;
+    const SCALE_MULTIPLE = 0.65;
+    
+    // 바운딩 박스 계산
+    const minX = Math.min(...matchsticks.map((stick) => stick.x));
+    const maxX = Math.max(...matchsticks.map((stick) => stick.x));
+    const minY = Math.min(...matchsticks.map((stick) => stick.y));
+    const maxY = Math.max(...matchsticks.map((stick) => stick.y));
 
-    const boundingWidth = maxX - minX
-    const boundingHeight = maxY - minY
+    // 성냥개비가 1-2개일 때는 바운딩 박스에 패딩 추가
+    const boundingWidth = matchsticks.length <= 2 ? 
+      Math.max(maxX - minX, 100) + PADDING * 2 : 
+      maxX - minX + PADDING;
+    
+    const boundingHeight = matchsticks.length <= 2 ? 
+      Math.max(maxY - minY, 100) + PADDING * 2 : 
+      maxY - minY + PADDING;
 
+    // 가로세로 비율 계산
+    const aspectRatio = boundingWidth / boundingHeight;
+    
     // 스테이지 스케일 계산
     const scaleX = stageWidth / boundingWidth;
     const scaleY = stageHeight / boundingHeight;
-    const newScale = Math.min(scaleX, scaleY) * 0.77 // 여백을 위해 0.77 배율 추가
+    
+    // 가로가 긴 경우 (aspectRatio > 1.5) scaleX를 우선적으로 고려
+    let newScale;
+    if (aspectRatio > 1.5) {
+      newScale = scaleX * SCALE_MULTIPLE * 1.4; // 가로가 긴 경우 20% 더 크게
+    } else {
+      newScale = Math.min(scaleX, scaleY) * SCALE_MULTIPLE;
+    }
 
     const stageCenter = {
       x: stageWidth / 2,
@@ -69,18 +94,19 @@ export default function PuzzleCanvas({ puzzleData }) {
       y: stageCenter.y - matchsticksCenter.y * newScale,
     };
 
-    setScale(newScale); // 스케일 업데이트
+    setScale(newScale);
 
     setMatchsticks(prev => prev.map(stick => ({
       ...stick,
-      x: stick.x + newOffset.x,
-      y: stick.y + newOffset.y,
+      x: stick.x + newOffset.x / newScale,
+      y: stick.y + newOffset.y / newScale,
     })));
+    
     setInitMatchstick(prev => prev.map(stick => ({
       ...stick,
-      x: stick.x + newOffset.x,
-      y: stick.y + newOffset.y,
-    })))
+      x: stick.x + newOffset.x / newScale,
+      y: stick.y + newOffset.y / newScale,
+    })));
   };
   // JSON 데이터 로드
   useEffect(()=>{
@@ -100,7 +126,7 @@ export default function PuzzleCanvas({ puzzleData }) {
   // 이미지 로드
   useEffect(() => {
     const img = new window.Image()
-    img.src = "/matchstick.webp" // 이미지 경로
+    img.src = "/matchstick2.webp" // 이미지 경로
     img.onload = () => {
       imageRef.current = img;
       setMatchsticks((sticks) => [...sticks])
@@ -331,15 +357,7 @@ export default function PuzzleCanvas({ puzzleData }) {
         angle: Math.round(stick.angle)
       }));
 
-      const response = await fetch(`http://localhost:3000/puzzles/${puzzleData.id}/solve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(roundedMatchsticks)
-      });
-      const result = await response.json();
+      const result = await fetchSolvePuzzle(puzzleData.id, roundedMatchsticks);
 
       setModalContent({
         message: result.alreadySolved ? 
@@ -387,9 +405,89 @@ export default function PuzzleCanvas({ puzzleData }) {
     return () => window.removeEventListener("resize", updateStageSize)
   }, [])
 
+  const handleDifficultyChange = async (newDifficulty) => {
+    if (!isAdmin) return;
+    
+    try {
+      setIsUpdatingDifficulty(true);
+      const result = await updatePuzzleDifficulty(puzzleData.id, newDifficulty);
+      
+      setModalContent({
+        message: `난이도가 ${newDifficulty}로 변경되었습니다.`,
+        buttons: [{ label: "확인", onClick: () => setIsModalOpen(false) }],
+      });
+      setIsModalOpen(true);
+      
+      // puzzleData 업데이트
+      puzzleData.difficulty = result.difficulty;
+      puzzleData.difficultySetAt = result.difficultySetAt;
+
+    } catch (error) {
+      setModalContent({
+        message: error.message,
+        buttons: [{ label: "확인", onClick: () => setIsModalOpen(false) }],
+      });
+      setIsModalOpen(true);
+    } finally {
+      setIsUpdatingDifficulty(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!isAdmin) return;
+
+    const confirmed = window.confirm('정말로 이 퍼즐을 삭제하시겠습니까?');
+    if (!confirmed) return;
+
+    try {
+      await deletePuzzleAdmin(puzzleData.id);
+      navigate('/puzzle'); // 퍼즐 목록으로 이동
+      alert('퍼즐이 삭제되었습니다.');
+    } catch (error) {
+      alert(error.message || '퍼즐 삭제에 실패했습니다.');
+    }
+  };
+
   return (
     <>
-    <div className="pt-5 text-neutral-800 pl-2 pb-2 font-bold text-2xl">{puzzleData?.title}</div>
+    <div className="flex flex-row pl-2 gap-1 mt-2 items-center">
+      <div className="text-neutral-800 pb-2 font-bold text-2xl">{puzzleData?.title}</div>
+      <div className="scale-90 -translate-y-1 text-white text-sm font-bold bg-red-400 rounded-md px-2 py-1 ">정답률 {puzzleData?._count.attemptedByUsers > 0 ? ` ${Math.round(puzzleData?._count.solvedByUsers/puzzleData?._count.attemptedByUsers*100)}% ` : ''}</div>
+      {isAdmin && (
+        <div className="relative inline-block">
+          <select
+            value={puzzleData?.difficulty || 'Unrated'}
+            onChange={(e) => handleDifficultyChange(e.target.value)}
+            disabled={isUpdatingDifficulty}
+            className={`
+              ml-2 px-2 py-1 rounded-md text-sm font-medium
+              ${puzzleData?.difficulty === 'Unrated' ? 'bg-gray-200' : 
+                puzzleData?.difficulty === 'Easy' ? 'bg-green-200' :
+                puzzleData?.difficulty === 'Normal' ? 'bg-blue-200' :
+                puzzleData?.difficulty === 'Hard' ? 'bg-orange-200' :
+                'bg-red-200'}
+              hover:opacity-80 cursor-pointer disabled:cursor-not-allowed
+            `}
+          >
+            <option value="Unrated">난이도 설정</option>
+            {DIFFICULTY_OPTIONS.map((diff) => (
+              <option key={diff} value={diff}>{diff}</option>
+            ))}
+          </select>
+          {isUpdatingDifficulty && (
+            <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+              <div className="animate-spin h-4 w-4 border-2 border-blue-500 rounded-full border-t-transparent"></div>
+            </div>
+          )}
+          <button
+                onClick={handleDelete}
+                className="ml-2 px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                삭제
+          </button>
+        </div>
+      )}
+    </div>
     {isModalOpen && (
         <ResultModal
           message={modalContent.message}
@@ -436,21 +534,20 @@ export default function PuzzleCanvas({ puzzleData }) {
                     key={stick.id}
                     stick={stick}
                     image={imageRef.current}
-                    isSelected={stick.id === selectedMatchstick}
                     onSelect={handleSelect}
                     onDragEnd={handleDragEnd}
                     onTransformEnd={handleRotateEnd}
                     canMove={gameType === "move"}
                   />
                   {/* 성냥개비 위에 id를 표시 */}
-                  <Text
+                  {/* <Text
                     x={stick.x} // Rect의 중심 위에 배치
                     y={stick.y } // Rect의 위쪽에 배치
                     text={stick.id}
                     fontSize={14}
                     fill="black"
                     align="center"
-                  />
+                  /> */}
                 </Fragment>
             ))}
             {/* Transformer */}
@@ -470,10 +567,11 @@ export default function PuzzleCanvas({ puzzleData }) {
             <LikeButton likes={puzzleData?._count.likes} puzzleId={puzzleData?.id}/>
           </div>
           <div className="-translate-x-4 font-serif text-stone-500 select-none">
-            createdBy @{puzzleData?.createBy}
+            createdBy @{puzzleData?.createBy.username}
           </div>
         </div>
       </div>
+      <div className="text-neutral-800 text-sm font-bold mt-2 ml-2">[성공: {puzzleData?._count.solvedByUsers} / 시도: {puzzleData?._count.attemptedByUsers}명]</div>
     </>
   )
 }

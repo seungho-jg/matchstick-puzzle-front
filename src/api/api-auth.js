@@ -1,27 +1,47 @@
 const API_BASE_URL = 'http://localhost:3000'
 
 // 회원가입
-export async function fetchRegister(formData) {
-  const response = await fetch(`${API_BASE_URL}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(formData),
-  })
-  if (!response.ok) {
-    throw new Error('Failed to create a puzzle')
+export const fetchRegister = async (data) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message);
+    }
+
+    return result;
+  } catch (error) {
+    throw error;
   }
-  return response.json()
-}
+};
 
 // 로그인
-export async function fetchLogin(formData) {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(formData),
-  })
-  if (!response.ok) {
-    throw new Error('Failed to create a puzzle')
+export const fetchLogin = async (data) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message);
+    }
+
+    return result;
+  } catch (error) {
+    throw error;
   }
-  return response.json()
-}
+};

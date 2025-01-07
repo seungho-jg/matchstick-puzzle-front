@@ -15,10 +15,12 @@ export default function RegisterPage() {
     // confirm_password를 제거한 데이터를 전송
     const { confirm_password, ...formData } = data;
     try {
-      await fetchRegister(formData)
-      navigate('/login')
+      const response = await fetchRegister(formData);
+      alert(response.message); // 성공 메시지 표시
+      navigate('/login');
     } catch (error) {
-      alert(error.response?.data?.message || '회원가입에 실패했습니다.');
+      // 에러 메시지 직접 표시
+      alert(error.message || '회원가입에 실패했습니다.');
     }
   }
   return (
@@ -37,6 +39,7 @@ export default function RegisterPage() {
               type="email"
               id="email"
               name="email"
+              autoComplete="username email"
               placeholder="이메일을 입력하세요"
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
@@ -65,6 +68,7 @@ export default function RegisterPage() {
               type="password"
               id="password"
               name="password"
+              autoComplete="new-password"
               placeholder="비밀번호를 입력하세요"
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
@@ -80,6 +84,7 @@ export default function RegisterPage() {
               type="password"
               id="confirm_password"
               name="confirm_password"
+              autoComplete="new-password"
               placeholder="비밀번호를 입력하세요"
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />

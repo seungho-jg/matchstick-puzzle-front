@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { fetchUserInfo } from "../../api/api-user";
 import { Link } from "react-router-dom";
+import { deletePuzzle } from "../../api/api-puzzle";
 
 // 다음 레벨까지 필요한 경험치 계산
 function getRequiredExp(level) {
@@ -11,6 +12,7 @@ export default function Profile() {
   const outletData = useOutletContext()
   const [username, setUsername] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
+  const [requiredExp, setRequiredExp] = useState(100);
 
   useEffect(() => {
     const username = outletData?.username
@@ -23,10 +25,28 @@ export default function Profile() {
     const getUserInfo = async () => {
       const userInfo = await fetchUserInfo()
       setUserInfo(userInfo)
+      // 데이터를 받아온 후 바로 다음 레벨 필요 경험치 계산
+      if (userInfo?.user?.level) {
+        const nextLevelExp = Math.floor(100 * Math.pow(1.2, userInfo.user.level));
+        setRequiredExp(nextLevelExp);
+      }
     }
     getUserInfo()
-  }, [])
+  }, [userInfo?.user?.level])
 
+    const handleDeletePuzzle = async (e, puzzleId) => {
+      e.preventDefault()
+      if (window.confirm('정말로 이 퍼즐을 삭제하시겠습니까?')) {
+        try {
+          await deletePuzzle(puzzleId);
+          // 삭제 후 유저 정보 새로고침
+          const updatedUserInfo = await fetchUserInfo();
+          setUserInfo(updatedUserInfo);
+        } catch (error) {
+          alert('퍼즐 삭제에 실패했습니다.');
+        }
+      }
+    };
   return (
     <div className="space-y-8">
       <div className="flex flex-row gap-3 text-left items-center">
@@ -36,11 +56,11 @@ export default function Profile() {
           <div className="flex flex-row gap-2 items-center">
             <div className="text-sm text-gray-500">
               <span className="font-bold text-gray-900 text-md">Level {userInfo?.user.level} </span>
-                <span className="text-xs">({userInfo?.user.exp} / {getRequiredExp(userInfo?.user.level + 1)} XP)</span>
+                <span className="text-xs">({userInfo?.user.exp || 0} / {requiredExp} XP)</span>
               <div className="flex items-center gap-2">
                 <div className="w-32 h-2 bg-gray-200 rounded-full">
                   <div 
-                    className="h-full bg-pink-500 rounded-full" 
+                    className="h-full bg-rose-400 rounded-full" 
                     style={{width: `${(userInfo?.user.exp % 100)}%`}}
                   />
                 </div>
@@ -96,6 +116,7 @@ export default function Profile() {
                   난이도: {puzzle.difficulty} | 유형: {puzzle.gameType}
                   <span className="ml-2">❤️ {puzzle._count?.likes || 0}</span>
                   <span className="ml-2">✅ {puzzle._count?.solvedByUsers || 0}</span>
+                  <span className="ml-2 bg-red-300 text-white hover:bg-red-500 rounded-md py-1 px-2" onClick={(e) => handleDeletePuzzle(e, puzzle.id)} >삭제하기</span>
                 </div>
               </Link>
             ))}

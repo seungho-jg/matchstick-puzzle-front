@@ -2,30 +2,41 @@ import { redirect } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
 import { jwtDecode } from "jwt-decode";
 
-const getUserToken = async () => {
+const validateAndDecodeToken = async () => {
   const token = useAuthStore.getState().token;
   if (!token) {
-    return redirect("/login");
+    return null;
   }
+
   try {
     const decoded = jwtDecode(token);
     const currentTime = Date.now() / 1000;
     
     if (decoded.exp < currentTime) {  
-      useAuthStore.getState().clearToken();
-      throw redirect("/login");
+      useAuthStore.getState().clearAuth();
+      return null;
     }
-    return { username: decoded.username };
+
+    // 토큰이 유효하면 사용자 정보 업데이트
+    useAuthStore.getState().setUserInfo({
+      id: decoded.sub,
+      email: decoded.email,
+      username: decoded.username,
+      role: decoded.role,
+      puzzleCreateCount: decoded.puzzleCreateCount
+    });
+
+    return decoded;
   } catch (error) {
-    return redirect("/login");
+    useAuthStore.getState().clearAuth();
+    return null;
   }
 };
 
 export async function authLoader() {
-  const user = await getUserToken();
-  if (!user) {
-    console.log("user is null");
+  const decoded = await validateAndDecodeToken();
+  if (!decoded) {
     return redirect("/login");
   }
-  return user;
+  return decoded;
 }
