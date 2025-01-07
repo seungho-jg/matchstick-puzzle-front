@@ -13,6 +13,7 @@ export default function LoginPage() {
 
   const setToken = useAuthStore((state) => state.setToken);
   const setUserInfo = useAuthStore((state) => state.setUserInfo);
+  
   const handleLogin = async (data) => {
     try {
       const response = await fetchLogin(data);

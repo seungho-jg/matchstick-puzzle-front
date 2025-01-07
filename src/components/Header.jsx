@@ -35,7 +35,7 @@ export default function Header() {
               className="h-8 w-auto"
             />
             <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">
-              Matchstick Puzzle
+            Matchstick Puzzle
             </span>
           </Link>
           
