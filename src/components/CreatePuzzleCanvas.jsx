@@ -37,8 +37,7 @@ export default function CreatePuzzleCanvas() {
   const transformerRef = useRef(null)
   const stageContainerRef = useRef(null);
 
-  const puzzleCreateCount = useAuthStore((state) => state.puzzleCreateCount);
-  const setPuzzleCreateCount = useAuthStore((state) => state.setPuzzleCreateCount);
+  const { puzzleCreateCount, decreasePuzzleCount } = useAuthStore()
   // 이미지 로드
   useEffect(() => {
     const img = new window.Image();
@@ -212,7 +211,14 @@ export default function CreatePuzzleCanvas() {
       alert('퍼즐 생성 횟수가 부족합니다.');
       return;
     }
-
+    if (title === '') {
+      alert('퍼즐 제목을 입력해주세요.');
+      return;
+    }
+    if (solutions.length === 0) {
+      alert('정답이 없습니다.');
+      return;
+    }
     const puzzleData = {
       title,
       gameType,
@@ -227,9 +233,9 @@ export default function CreatePuzzleCanvas() {
 
     try {
       await createPuzzle(puzzleData);
-      setPuzzleCreateCount(prev => prev - 1);
+      decreasePuzzleCount();
       invalidatePuzzles();
-      alert(`퍼즐이 성공적으로 생성되었습니다! (craft coin: ${puzzleCreateCount - 1})`);
+      alert(`퍼즐이 성공적으로 생성되었습니다! (craft coin: ${puzzleCreateCount})`);
       navigate('/');
     } catch (error) {
       console.error('퍼즐 생성 실패:', error);
