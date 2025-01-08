@@ -1,21 +1,12 @@
 import { useEffect, useState } from "react";
 import { fetchUserAll } from "../../api/api-user";
 import { Link } from "react-router-dom";
+import { useUserLeaderBoard } from "../../hooks/userLeaderBoard";
 
 export default function LeaderboardPage() {
-  const [users, setUsers] = useState([]);
+  const { data: users, isLoading, error } = useUserLeaderBoard();
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const userData = await fetchUserAll();
-        setUsers(userData);
-      } catch (error) {
-        console.error('유저 정보 가져오기 실패:', error);
-      }
-    };
-    fetchUsers();
-  }, []);
+
 
   const getSortedUsers = () => {
     return [...users].sort((a, b) => {
@@ -26,6 +17,8 @@ export default function LeaderboardPage() {
         return b.level - a.level;
     });
   };
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
 
   return (
     <div className="container mx-auto p-4">
