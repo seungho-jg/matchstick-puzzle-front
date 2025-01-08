@@ -6,14 +6,18 @@ import { createPuzzle } from '../api/api-puzzle';
 import { useNavigate } from 'react-router-dom';
 import { getPuzzleCreateCount } from '../api/api-user';
 import useAuthStore from '../store/authStore';
+import { useInvalidatePuzzles } from '../hooks/usePuzzle';
+
+// 상수로 미리 정의된 카테고리 목록 수정
+const PREDEFINED_CATEGORIES = ['고치기', '수학', '모양', '도형', '넌센스', '재미', '숫자', '사칙연산', '방정식', '기하학', '퀴즈'];
 
 export default function CreatePuzzleCanvas() {
   const navigate = useNavigate();
+  const { invalidatePuzzles } = useInvalidatePuzzles();
   // 상태 관리
   const [title, setTitle] = useState('');
   const [gameType, setGameType] = useState('move');
   const [category, setCategory] = useState([]);
-  const [categoryInput, setCategoryInput] = useState('');
   const [limit, setLimit] = useState(1);
   const [limitcheck, setLimitcheck] = useState(1);
   const [moveCounts, setMoveCounts] = useState({})
@@ -33,12 +37,11 @@ export default function CreatePuzzleCanvas() {
   const transformerRef = useRef(null)
   const stageContainerRef = useRef(null);
 
-  const puzzleCreateCount = useAuthStore((state) => state.puzzleCreateCount);
-  const setPuzzleCreateCount = useAuthStore((state) => state.setPuzzleCreateCount);
+  const { puzzleCreateCount, decreasePuzzleCount } = useAuthStore()
   // 이미지 로드
   useEffect(() => {
     const img = new window.Image();
-    img.src = "/matchstick.webp";
+    img.src = "/skins/matchstick.webp";
     img.onload = () => {
       imageRef.current = img;
     };
@@ -187,12 +190,19 @@ export default function CreatePuzzleCanvas() {
     setMoveCounts({});
   };
 
-  // 카테고리 추가
-  const handleAddCategory = () => {
-    if (categoryInput.trim() && !category.includes(categoryInput.trim())) {
-      setCategory(prev => [...prev, categoryInput.trim()]);
-      setCategoryInput('');
-    }
+  // 카테고리 토글 함수 수정
+  const handleToggleCategory = (cat) => {
+    setCategory(prev => {
+      if (prev.includes(cat)) {
+        return prev.filter(c => c !== cat);
+      } else {
+        // 이미 3개가 선택되어 있다면 새로운 카테고리를 추가하지 않음
+        if (prev.length >= 3) {
+          return prev;
+        }
+        return [...prev, cat];
+      }
+    });
   };
 
   // 퍼즐 제출
@@ -201,7 +211,14 @@ export default function CreatePuzzleCanvas() {
       alert('퍼즐 생성 횟수가 부족합니다.');
       return;
     }
-
+    if (title === '') {
+      alert('퍼즐 제목을 입력해주세요.');
+      return;
+    }
+    if (solutions.length === 0) {
+      alert('정답이 없습니다.');
+      return;
+    }
     const puzzleData = {
       title,
       gameType,
@@ -216,8 +233,9 @@ export default function CreatePuzzleCanvas() {
 
     try {
       await createPuzzle(puzzleData);
-      setPuzzleCreateCount(prev => prev - 1);
-      alert(`퍼즐이 성공적으로 생성되었습니다! (craft coin: ${puzzleCreateCount - 1})`);
+      decreasePuzzleCount();
+      invalidatePuzzles();
+      alert(`퍼즐이 성공적으로 생성되었습니다! (craft coin: ${puzzleCreateCount})`);
       navigate('/');
     } catch (error) {
       console.error('퍼즐 생성 실패:', error);
@@ -317,30 +335,19 @@ export default function CreatePuzzleCanvas() {
           onChange={e => setTitle(e.target.value)}
           className="w-full p-2 border rounded"
         />
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="카테고리 추가"
-            value={categoryInput}
-            onChange={e => setCategoryInput(e.target.value)}
-            className="flex-1 p-2 border rounded"
-          />
-          <button 
-            onClick={handleAddCategory}
-            className="px-4 py-2 bg-blue-500 text-white rounded"
-          >
-            추가
-          </button>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {category.map((cat, index) => (
-            <span 
-              key={index}
-              className="px-2 py-1 bg-gray-200 rounded"
-              onClick={() => setCategory(prev => prev.filter((_, i) => i !== index))}
+        <div className="flex overflow-x-auto scrollbar-hide py-2">
+          {PREDEFINED_CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => handleToggleCategory(cat)}
+              className={`px-3 py-1.5 rounded-full transition-colors flex-shrink-0 mr-2 last:mr-0 ${
+                category.includes(cat)
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+              }`}
             >
-              {cat} ×
-            </span>
+              {cat}
+            </button>
           ))}
         </div>
       </div>

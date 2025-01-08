@@ -1,42 +1,16 @@
-import { useEffect, useState } from 'react'
 import PuzzleCard from '../../components/PuzzleCard'
-import { fetchAllPuzzles } from '../../api/api-puzzle';
-import { getPuzzleCreateCount } from '../../api/api-user';
-import useAuthStore from '../../store/authStore';
+import { useAllPuzzles } from '../../hooks/usePuzzle';
 
 export default function Home() {
-  const [puzzles, setPuzzles] = useState([])
-  const [error, setError] = useState(null);
-  const setPuzzleCreateCount = useAuthStore((state) => state.setPuzzleCreateCount);
+  const { 
+    data: puzzles,
+    isLoading,
+    isError,
+    error
+  } = useAllPuzzles();
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>Error: {error.message}</div>;
 
-  const fetchPuzzleCreateCount = async () => {
-    try {
-      const response = await getPuzzleCreateCount();
-      setPuzzleCreateCount(response.puzzleCreateCount);
-    } catch (error) {
-      console.error('퍼즐 생성 카운트 조회 실패:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchPuzzleCreateCount();
-  }, []);
-
-  useEffect(() => {
-    async function loadPuzzles() {
-      try {
-        const data = await fetchAllPuzzles()
-        setPuzzles(data)
-      } catch (error) {
-        setError(error.message)
-      }
-    }
-    loadPuzzles();
-  }, [])
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

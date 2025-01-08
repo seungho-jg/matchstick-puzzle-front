@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Stage, Layer } from 'react-konva'
 import { useRef, useEffect, useState } from 'react'
 import Matchstick from './Matchstick'
+import useImageStore from '../store/imageStore'
 
 export default function PuzzleCard({ puzzle }) {
   const {
@@ -20,6 +21,7 @@ export default function PuzzleCard({ puzzle }) {
   const [scale, setScale] = useState(1)
   const imageRef = useRef(null)
   const containerRef = useRef(null)
+  const { skinImages, currentSkin, loadUserSettings } = useImageStore()
 
   // 스테이지 크기 업데이트
   const updateStageSize = () => {
@@ -35,11 +37,11 @@ export default function PuzzleCard({ puzzle }) {
     const maxY = Math.max(...matchsticks.map((stick) => stick.y));
 
     // 성냥개비가 1-2개일 때는 바운딩 박스에 패딩 추가
-    const boundingWidth = matchsticks.length <= 2 ? 
+    const boundingWidth = matchsticks.length <= 4 ? 
       Math.max(maxX - minX, 100) + padding * 2 : 
       maxX - minX;
     
-    const boundingHeight = matchsticks.length <= 2 ? 
+    const boundingHeight = matchsticks.length <= 4 ? 
       Math.max(maxY - minY, 100) + padding * 2 : 
       maxY - minY;
 
@@ -65,17 +67,22 @@ export default function PuzzleCard({ puzzle }) {
     }
   };
 
-  // 이미지 로드
-  useEffect(() => {
-    const img = new window.Image()
-    img.src = "/matchstick.webp"
-    img.onload = () => {
-      imageRef.current = img
+
+    // 이미지 로드
+    useEffect(() => {
+      loadUserSettings()
       const initialMatchsticks = JSON.parse(initialState)
       setMatchsticks(initialMatchsticks)
-    }
-  }, [initialState])
+    }, []) // 초기 로드
+  
+    useEffect(() => {
+      if (skinImages[currentSkin]) {
+        imageRef.current = skinImages[currentSkin]
+        setMatchsticks(sticks => [...sticks])
+      }
+    }, [currentSkin, skinImages]) // 스킨이나 이미지가 변경될 때 업데이트
 
+    
   // 리사이즈 이벤트 리스너 등록
   useEffect(() => {
     const handleResize = () => {

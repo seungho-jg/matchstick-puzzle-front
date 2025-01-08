@@ -1,6 +1,7 @@
 import useAuthStore from "../store/authStore"
 
-const API_BASE_URL = 'http://localhost:3000'
+// API 기본 URL을 환경변수에서 가져오기
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 // 퍼즐 전체 가져오기
 export async function fetchAllPuzzles() {

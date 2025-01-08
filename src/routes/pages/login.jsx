@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { loginSchema } from '../../validationSchemas';
 import { fetchLogin } from '../../api/api-auth';
 import useAuthStore from '../../store/authStore';
+import { getPuzzleCreateCount } from "../../api/api-user";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -13,11 +14,15 @@ export default function LoginPage() {
 
   const setToken = useAuthStore((state) => state.setToken);
   const setUserInfo = useAuthStore((state) => state.setUserInfo);
+  const setPuzzleCreateCount = useAuthStore((state) => state.setPuzzleCreateCount);
+  
   const handleLogin = async (data) => {
     try {
       const response = await fetchLogin(data);
       setToken(response.token);
       setUserInfo(response.user);
+      const res = await getPuzzleCreateCount();
+      setPuzzleCreateCount(res.puzzleCreateCount);
       navigate('/');
     } catch (error) {
       alert(error.message || '로그인에 실패했습니다.');
