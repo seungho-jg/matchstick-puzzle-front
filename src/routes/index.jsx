@@ -15,6 +15,7 @@ import { authLoader } from './loaders/authLoader'
 import LeaderboardPage from './pages/leaderboard'
 import CreatePuzzleCanvas from '../components/CreatePuzzleCanvas'
 import PuzzleListPage from './pages/puzzleList'
+import SupportPage from './pages/support'
 
 // 로딩 컴포넌트 생성
 const LoadingFallback = () => (
@@ -44,6 +45,10 @@ const router = createBrowserRouter([
       {
         path: "leaderboard",
         element: <LeaderboardPage />
+      },
+      {
+        path: "support",
+        element: <SupportPage />
       },
       // 기본
       {

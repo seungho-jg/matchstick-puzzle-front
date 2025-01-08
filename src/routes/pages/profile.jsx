@@ -3,16 +3,16 @@ import { useOutletContext } from "react-router-dom";
 import { fetchUserInfo } from "../../api/api-user";
 import { Link } from "react-router-dom";
 import { deletePuzzle } from "../../api/api-puzzle";
-
+import SkinSelector from "../../components/SkinSelector";
+import { useInvalidatePuzzles } from '../../hooks/usePuzzle';
 // 다음 레벨까지 필요한 경험치 계산
-function getRequiredExp(level) {
-  return Math.floor(100 * Math.pow(1.2, level - 1));
-}
+
 export default function Profile() {
   const outletData = useOutletContext()
   const [username, setUsername] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
   const [requiredExp, setRequiredExp] = useState(100);
+  const { invalidatePuzzles } = useInvalidatePuzzles();
 
   useEffect(() => {
     const username = outletData?.username
@@ -35,10 +35,12 @@ export default function Profile() {
   }, [userInfo?.user?.level])
 
     const handleDeletePuzzle = async (e, puzzleId) => {
+      
       e.preventDefault()
       if (window.confirm('정말로 이 퍼즐을 삭제하시겠습니까?')) {
         try {
           await deletePuzzle(puzzleId);
+          invalidatePuzzles();
           // 삭제 후 유저 정보 새로고침
           const updatedUserInfo = await fetchUserInfo();
           setUserInfo(updatedUserInfo);
@@ -68,6 +70,7 @@ export default function Profile() {
             </div>
           </div>
         </div>
+          <SkinSelector />
         <div>
           <h2 className="text-md  font-bold mb-4">성공한 문제 ( {userInfo?.stats.totalSolved} )</h2>
           <div className="grid gap-4">

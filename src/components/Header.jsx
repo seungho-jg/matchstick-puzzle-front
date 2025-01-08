@@ -84,7 +84,7 @@ export default function Header() {
                         퍼즐 만들기
                         </Link>
                         <div className="absolute right-2 text-xs font-bold text-gray-500 px-2 rounded-full bg-yellow-100 p-1">
-                          {puzzleCreateCount} left
+                          {puzzleCreateCount || 0} left
                         </div>
                       </div>
                       <button

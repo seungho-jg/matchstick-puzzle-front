@@ -6,6 +6,7 @@ import LikeButton from "./LikeBtn"
 import useAuthStore from "../store/authStore"
 import { useNavigate } from "react-router-dom"
 import { updatePuzzleDifficulty, deletePuzzleAdmin, fetchSolvePuzzle } from '../api/api-puzzle';
+import useImageStore from "../store/imageStore"
 
 const DIFFICULTY_OPTIONS = ['EASY', 'NORMAL', 'HARD', 'EXTREME'];
 
@@ -13,6 +14,7 @@ export default function PuzzleCanvas({ puzzleData }) {
   const { token } = useAuthStore()
   const navigate = useNavigate()
   const isAdmin = useAuthStore((state) => state.isAdmin())
+  const { skinImages, currentSkin, loadUserSettings } = useImageStore()
 
   // 게임 초기 데이터
   const [initMatchstick, setInitMatchstick] = useState([])
@@ -56,11 +58,11 @@ export default function PuzzleCanvas({ puzzleData }) {
     const maxY = Math.max(...matchsticks.map((stick) => stick.y));
 
     // 성냥개비가 1-2개일 때는 바운딩 박스에 패딩 추가
-    const boundingWidth = matchsticks.length <= 2 ? 
+    const boundingWidth = matchsticks.length <= 4 ? 
       Math.max(maxX - minX, 100) + PADDING * 2 : 
       maxX - minX + PADDING;
     
-    const boundingHeight = matchsticks.length <= 2 ? 
+    const boundingHeight = matchsticks.length <= 4 ? 
       Math.max(maxY - minY, 100) + PADDING * 2 : 
       maxY - minY + PADDING;
 
@@ -123,15 +125,25 @@ export default function PuzzleCanvas({ puzzleData }) {
     loadGameData()
   }, [puzzleData])
 
+  // matchsticks가 업데이트된 후 중앙 정렬
+  
+useEffect(() => {
+  if (matchsticks.length > 0) {
+    adjustCenter();
+  }
+}, [matchsticks.length]);
+
   // 이미지 로드
   useEffect(() => {
-    const img = new window.Image()
-    img.src = "/matchstick2.webp" // 이미지 경로
-    img.onload = () => {
-      imageRef.current = img;
-      setMatchsticks((sticks) => [...sticks])
-    };
-  }, []);
+    loadUserSettings()
+  }, []) // 초기 로드
+
+  useEffect(() => {
+    if (skinImages[currentSkin]) {
+      imageRef.current = skinImages[currentSkin]
+      setMatchsticks(sticks => [...sticks]) // 리랜더링 트리거
+    }
+  }, [currentSkin, skinImages]) // 스킨이나 이미지가 변경될 때 업데이트
 
   // Transformer 업데이트
   useEffect(() => {

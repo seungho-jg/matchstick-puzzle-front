@@ -6,7 +6,7 @@ const useAuthStore = create(
     (set, get) => ({
       token: null,
       user: null,
-      puzzleCreateCount: null,
+      puzzleCreateCount: 0,
       setToken: (token) => set({ token }),
       setUserInfo: (userInfo) => set({ user: userInfo }),
       setPuzzleCreateCount: (count) => set({ puzzleCreateCount: count }),

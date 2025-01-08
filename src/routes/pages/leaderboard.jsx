@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchUserAll } from "../../api/api-user";
+import { Link } from "react-router-dom";
 
 export default function LeaderboardPage() {
   const [users, setUsers] = useState([]);
@@ -28,7 +29,12 @@ export default function LeaderboardPage() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">리더보드</h1>
+      <div className="flex justify-between items-center mb-3">
+        <h1 className="text-2xl font-bold">리더보드</h1>
+        <Link to="/support">
+          <span className="hover:scale-105 transition-all duration-300 bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-blue-400 border border-blue-400">후원하기</span>
+        </Link>
+      </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full">
