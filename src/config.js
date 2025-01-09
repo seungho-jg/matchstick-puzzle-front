@@ -1,1 +1,1 @@
-export const API_BASE_URL = 'https://13.125.62.12';
+export const API_BASE_URL = 'https://api.matchstick-puzzle.com';
