@@ -13,6 +13,7 @@ const PREDEFINED_CATEGORIES = ['고치기', '수학', '모양', '도형', '넌�
 
 export default function CreatePuzzleCanvas() {
   const navigate = useNavigate();
+  const setPuzzleCreateCount = useAuthStore(state => state.setPuzzleCreateCount);
   const { invalidatePuzzles } = useInvalidatePuzzles();
   // 상태 관리
   const [title, setTitle] = useState('');
@@ -54,6 +55,7 @@ export default function CreatePuzzleCanvas() {
         const response = await getPuzzleCreateCount();
         // response에서 puzzleCreateCount 값만 추출
         setPuzzleCreateCount(response.puzzleCreateCount);
+
       } catch (error) {
         console.error('퍼즐 생성 카운트 조회 실패:', error);
       }
