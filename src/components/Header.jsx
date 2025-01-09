@@ -6,11 +6,11 @@ import { getPuzzleCreateCount } from "../api/api-user"
 export default function Header() {
   const token = useAuthStore((state) => state.token)
   const clearToken = useAuthStore((state) => state.clearToken)
+  const isAdmin = useAuthStore((state) => state.isAdmin())
   const [dark, setDark] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const navigate = useNavigate()
   const puzzleCreateCount = useAuthStore((state) => state.puzzleCreateCount);
-  
   const darkModeHandler = () => {
     setDark(!dark)
     document.body.classList.toggle("dark");
@@ -34,8 +34,11 @@ export default function Header() {
               alt="Matchstick Puzzle"
               className="h-8 w-auto"
             />
-            <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">
-            Matchstick Puzzle
+            <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white hidden md:block">
+              Matchstick Puzzle
+            </span>
+            <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white md:hidden">
+              Puzzle
             </span>
           </Link>
           
@@ -44,7 +47,7 @@ export default function Header() {
               to="/puzzle"
               className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium dark:text-gray-300 dark:hover:text-white"
             >
-              퍼즐 목록
+              검색
             </Link>
             <Link
               to="/leaderboard"
@@ -60,8 +63,20 @@ export default function Header() {
                   className="flex items-center text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium dark:text-gray-300 dark:hover:text-white"
                 >
                   <span>프로필</span>
-                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  <svg 
+                    className={`w-4 h-4 ml-1 transition-transform duration-200 ${
+                      isProfileMenuOpen ? 'transform rotate-180' : ''
+                    }`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth="2" 
+                      d="M19 9l-7 7-7-7" 
+                    />
                   </svg>
                 </button>
                 
@@ -87,6 +102,14 @@ export default function Header() {
                           {puzzleCreateCount || 0} left
                         </div>
                       </div>
+                      {isAdmin && (
+                        <Link
+                          to="/admin"
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-600"
+                        >
+                          관리
+                        </Link>
+                      )}
                       <button
                         onClick={handleLogout}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-600"

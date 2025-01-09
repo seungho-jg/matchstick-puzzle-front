@@ -1,12 +1,9 @@
-import { useEffect, useState } from "react";
-import { fetchUserAll } from "../../api/api-user";
 import { Link } from "react-router-dom";
 import { useUserLeaderBoard } from "../../hooks/userLeaderBoard";
+import LoadingFallback from "../../components/LoadingFallback";
 
 export default function LeaderboardPage() {
   const { data: users, isLoading, error } = useUserLeaderBoard();
-
-
 
   const getSortedUsers = () => {
     return [...users].sort((a, b) => {
@@ -17,11 +14,11 @@ export default function LeaderboardPage() {
         return b.level - a.level;
     });
   };
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <LoadingFallback />;
   if (error) return <div>Error: {error.message}</div>;
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto pt-3">
       <div className="flex justify-between items-center mb-3">
         <h1 className="text-2xl font-bold">리더보드</h1>
         <Link to="/support">
@@ -33,17 +30,17 @@ export default function LeaderboardPage() {
         <table className="min-w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 순위
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 유저명
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 레벨
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                제작한 퍼즐
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                제작
               </th>
             </tr>
           </thead>

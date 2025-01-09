@@ -16,13 +16,11 @@ import LeaderboardPage from './pages/leaderboard'
 import CreatePuzzleCanvas from '../components/CreatePuzzleCanvas'
 import PuzzleListPage from './pages/puzzleList'
 import SupportPage from './pages/support'
-
-// 로딩 컴포넌트 생성
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center h-screen">
-    <div className="text-lg">로딩중...</div>
-  </div>
-);
+import LoadingFallback from '../components/LoadingFallback'
+import AdminLayout from './layouts/AdminLayout'
+import AdminDashboard from './pages/admin-dashboard'
+import { adminLoader } from './loaders/adminLoader'
+import AdminUsers from './pages/admin-users'
 
 const router = createBrowserRouter([
   {
@@ -79,6 +77,22 @@ const router = createBrowserRouter([
           {
             path: "create",
             element: <CreatePuzzleCanvas />
+          }
+        ]
+      },
+      {
+        path: "admin",
+        element: <AdminLayout />,
+        errorElement: <ErrorPage />,
+        loader: adminLoader,
+        children: [
+          {
+            index: true,
+            element: <AdminDashboard />
+          },
+          {
+            path: "users",
+            element: <AdminUsers />
           }
         ]
       },

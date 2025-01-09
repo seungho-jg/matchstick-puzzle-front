@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import PuzzleCard from '../../components/PuzzleCard'
-import { fetchAllPuzzles } from '../../api/api-puzzle';
 import { useAllPuzzles } from '../../hooks/usePuzzle';
-
+import LoadingFallback from '../../components/LoadingFallback';
 export default function PuzzleListPage() {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
@@ -26,9 +25,9 @@ export default function PuzzleListPage() {
     loadPuzzles();
   }, [puzzles]);
   
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <LoadingFallback />;
   if (isError) return <div>Error: {error.message}</div>;
-  
+
   const toggleCategory = (category) => {
     setSelectedCategories(prev => {
       if (prev.includes(category)) {

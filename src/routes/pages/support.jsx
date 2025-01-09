@@ -1,7 +1,4 @@
-import { useState } from "react";
-
 export default function SupportPage() {
-  const [imgError, setImgError] = useState(false);
 
   return (
     <div className="flex flex-col items-center h-screen mt-10">
@@ -9,7 +6,7 @@ export default function SupportPage() {
       <p className="text-sm text-gray-500 mb-4">☕️ 커피 한 잔 후원해주세요.</p>
       
       <img 
-        src="/support.png"  // public 폴더의 파일은 루트 경로로 접근
+        src="/support.png"
         alt="후원하기" 
         className="w-1/2 mb-6"
         onError={(e) => {

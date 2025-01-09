@@ -235,7 +235,7 @@ export default function CreatePuzzleCanvas() {
       await createPuzzle(puzzleData);
       decreasePuzzleCount();
       invalidatePuzzles();
-      alert(`퍼즐이 성공적으로 생성되었습니다! (craft coin: ${puzzleCreateCount})`);
+      alert(`퍼즐이 성공적으로 생성되었습니다! (craft coin: ${puzzleCreateCount - 1})`);
       navigate('/');
     } catch (error) {
       console.error('퍼즐 생성 실패:', error);

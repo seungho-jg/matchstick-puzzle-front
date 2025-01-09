@@ -22,8 +22,7 @@ const validateAndDecodeToken = async () => {
       id: decoded.sub,
       email: decoded.email,
       username: decoded.username,
-      role: decoded.role,
-      puzzleCreateCount: decoded.puzzleCreateCount
+      role: decoded.role
     });
 
     return decoded;

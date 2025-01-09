@@ -1,6 +1,6 @@
 import PuzzleCard from '../../components/PuzzleCard'
 import { useAllPuzzles } from '../../hooks/usePuzzle';
-
+import LoadingFallback from '../../components/LoadingFallback'
 export default function Home() {
   
   const { 
@@ -9,7 +9,7 @@ export default function Home() {
     isError,
     error
   } = useAllPuzzles();
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <LoadingFallback />;
   if (isError) return <div>Error: {error.message}</div>;
 
 
