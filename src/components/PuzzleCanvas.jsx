@@ -7,6 +7,7 @@ import useAuthStore from "../store/authStore"
 import { useNavigate } from "react-router-dom"
 import { updatePuzzleDifficulty, deletePuzzleAdmin, fetchSolvePuzzle } from '../api/api-puzzle';
 import useImageStore from "../store/imageStore"
+import { getPuzzleCreateCount } from "../api/api-user"
 
 const DIFFICULTY_OPTIONS = ['EASY', 'NORMAL', 'HARD', 'EXTREME'];
 
@@ -14,6 +15,7 @@ export default function PuzzleCanvas({ puzzleData }) {
   const { token } = useAuthStore()
   const navigate = useNavigate()
   const isAdmin = useAuthStore((state) => state.isAdmin())
+  const setPuzzleCreateCount = useAuthStore((state) => state.setPuzzleCreateCount);
   const { skinImages, currentSkin, loadUserSettings } = useImageStore()
 
   // 게임 초기 데이터
@@ -384,6 +386,8 @@ useEffect(() => {
       setIsModalOpen(true);
 
       if (result.levelUp) {
+        const response = await getPuzzleCreateCount();
+        setPuzzleCreateCount(response.puzzleCreateCount);
         alert(`축하합니다! 레벨 ${result.newLevel}이 되었습니다!`);
       }
     } catch (error) {

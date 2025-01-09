@@ -10,6 +10,7 @@ export default function Header() {
   const [dark, setDark] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const navigate = useNavigate()
+  const setPuzzleCreateCount = useAuthStore((state) => state.setPuzzleCreateCount);
   const puzzleCreateCount = useAuthStore((state) => state.puzzleCreateCount);
   const darkModeHandler = () => {
     setDark(!dark)
@@ -23,6 +24,22 @@ export default function Header() {
     alert("로그아웃 되었습니다.")
     navigate('/')
   };
+
+  // 퍼즐 생성 카운트 조회
+  useEffect(() => {
+    const fetchPuzzleCreateCount = async () => {
+      try {
+        const response = await getPuzzleCreateCount();
+        // response에서 puzzleCreateCount 값만 추출
+        setPuzzleCreateCount(response.puzzleCreateCount);
+
+      } catch (error) {
+        console.error('퍼즐 생성 카운트 조회 실패:', error);
+      }
+    };
+    
+    fetchPuzzleCreateCount();
+  }, [isProfileMenuOpen]);
 
   return (
     <header className="bg-white shadow-sm fixed w-full dark:bg-slate-800 z-50">
