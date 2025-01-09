@@ -2,6 +2,7 @@ import PuzzleCard from '../../components/PuzzleCard'
 import { useAllPuzzles } from '../../hooks/usePuzzle';
 
 export default function Home() {
+  
   const { 
     data: puzzles,
     isLoading,

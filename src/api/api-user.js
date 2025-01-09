@@ -1,8 +1,7 @@
 import useAuthStore from "../store/authStore"
 import { jwtDecode } from "jwt-decode"
 
-// API 기본 URL을 환경변수에서 가져오기
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+import { API_BASE_URL } from '../config'
 
 export const getUserId = () => {
   const token = useAuthStore.getState().token

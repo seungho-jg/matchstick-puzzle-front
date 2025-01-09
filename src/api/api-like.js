@@ -1,8 +1,6 @@
 import useAuthStore from "../store/authStore"
 
-// API 기본 URL을 환경변수에서 가져오기
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
-
+import { API_BASE_URL } from '../config';
 
 // 좋아요 여부 확인
 export async function getLikes(puzzleId) {
