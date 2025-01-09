@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 // 페이지 및 레이아웃 컴포넌트 import
 import Root from './layouts/root'
 import Home from './pages/home'
+import AdminLayout from './layouts/admin-Layout'
 import ErrorPage from './pages/error'
 import PuzzleDetail from './pages/puzzle-detail'
 import Profile from './pages/profile'
@@ -20,7 +21,6 @@ import LoadingFallback from '../components/LoadingFallback'
 import AdminDashboard from './pages/admin-dashboard'
 import { adminLoader } from './loaders/adminLoader'
 import AdminUsers from './pages/admin-users'
-import AdminLayout from './layouts/AdminLayout'
 
 const router = createBrowserRouter([
   {
