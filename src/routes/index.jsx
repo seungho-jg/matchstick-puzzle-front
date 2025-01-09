@@ -17,10 +17,10 @@ import CreatePuzzleCanvas from '../components/CreatePuzzleCanvas'
 import PuzzleListPage from './pages/puzzleList'
 import SupportPage from './pages/support'
 import LoadingFallback from '../components/LoadingFallback'
-import AdminLayout from './layouts/AdminLayout'
 import AdminDashboard from './pages/admin-dashboard'
 import { adminLoader } from './loaders/adminLoader'
 import AdminUsers from './pages/admin-users'
+import AdminLayout from './layouts/AdminLayout'
 
 const router = createBrowserRouter([
   {
