@@ -61,7 +61,7 @@ export default function Header() {
           
           <nav className="flex items-center gap-3">
             <Link
-              to="/puzzle"
+              to="/search"
               className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium dark:text-gray-300 dark:hover:text-white"
             >
               검색

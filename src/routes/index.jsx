@@ -48,20 +48,10 @@ const router = createBrowserRouter([
         path: "support",
         element: <SupportPage />
       },
-      // 기본
+      // search puzzle
       {
-        path: "puzzle",
-        element: <PuzzleLayout />,
-        children: [
-          {
-            index: true,
-            element: <PuzzleListPage /> 
-          },
-          {
-            path: ":puzzleId",
-            element: <PuzzleDetail />
-          }
-        ]
+        path: "search",
+        element: <PuzzleListPage /> 
       },
       // 인증 필요한 라우터 관리
       {
@@ -102,7 +92,18 @@ const router = createBrowserRouter([
         element: <NotFound />
       }
     ]
-  }
+  },
+  // puzzle UI
+  {
+    path: "/puzzle",
+    element: <PuzzleLayout />,
+    children: [
+      {
+        path: "/puzzle/:puzzleId",
+        element: <PuzzleDetail />
+      }
+    ]
+  },
 ],
 )
 
