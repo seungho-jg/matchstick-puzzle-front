@@ -38,9 +38,10 @@ export function usePuzzleCreateCount(user) {
     queryKey: ['puzzleCreateCount', user?.id],
     queryFn: getPuzzleCreateCount,
     staleTime: 1000 * 60, // 1분 동안 데이터를 'fresh'하다고 간주
-  cacheTime: 1000 * 60 * 5, // 5분 동안 캐시 유지
-  refetchOnWindowFocus: false, // 윈도우 포커스 시 자동 재요청 비활성화
-  retry: 1, // 실패시 1번만 재시도
-  select: (data) => data.puzzleCreateCount, // 필요한 데이터만 선택
-})
+    cacheTime: 1000 * 60 * 5, // 5분 동안 캐시 유지
+    refetchOnWindowFocus: false, // 윈도우 포커스 시 자동 재요청 비활성화
+    refetchInterval: 1000 * 60 * 5, // 5분 마다 재요청
+    retry: 1, // 실패시 1번만 재시도
+    select: (data) => data.puzzleCreateCount, // 필요한 데이터만 선택
+  })
 }
