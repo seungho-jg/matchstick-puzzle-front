@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { getPuzzleCreateCount } from '../api/api-user';
 import useAuthStore from '../store/authStore';
 import { useInvalidatePuzzles } from '../hooks/usePuzzle';
+import { useQueryClient } from "@tanstack/react-query";
 
 // 상수로 미리 정의된 카테고리 목록 수정
 const PREDEFINED_CATEGORIES = ['고치기', '수학', '모양', '도형', '넌센스', '재미', '숫자', '사칙연산', '방정식', '기하학', '퀴즈'];
@@ -16,6 +17,8 @@ export default function CreatePuzzleCanvas() {
   const navigate = useNavigate();
   const setPuzzleCreateCount = useAuthStore(state => state.setPuzzleCreateCount);
   const { invalidatePuzzles } = useInvalidatePuzzles();
+  const queryClient = useQueryClient();
+  const user = useAuthStore(state => state.user);
   // 상태 관리
   const [title, setTitle] = useState('');
   const [gameType, setGameType] = useState('move');
@@ -239,6 +242,7 @@ export default function CreatePuzzleCanvas() {
       decreasePuzzleCount();
       invalidatePuzzles();
       toast.success(`퍼즐이 성공적으로 생성되었습니다! (craft coin: ${puzzleCreateCount - 1})`);
+      queryClient.invalidateQueries({ queryKey: ['puzzleCreateCount', user?.id] });
       navigate('/');
     } catch (error) {
       console.error('퍼즐 생성 실패:', error);

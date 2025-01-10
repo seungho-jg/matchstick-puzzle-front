@@ -3,16 +3,22 @@ import { Link, useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import useAuthStore from "../store/authStore"
 import { getPuzzleCreateCount } from "../api/api-user"
+import { useQuery } from '@tanstack/react-query';
+import { usePuzzleCreateCount } from "../hooks/usePuzzle"
 
 export default function Header() {
   const token = useAuthStore((state) => state.token)
   const clearToken = useAuthStore((state) => state.clearToken)
+  const user = useAuthStore((state) => state.user)
   const isAdmin = useAuthStore((state) => state.isAdmin())
   const [dark, setDark] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const navigate = useNavigate()
   const setPuzzleCreateCount = useAuthStore((state) => state.setPuzzleCreateCount);
-  const puzzleCreateCount = useAuthStore((state) => state.puzzleCreateCount);
+
+  const { data } = usePuzzleCreateCount(user);
+
+
   const darkModeHandler = () => {
     setDark(!dark)
     document.body.classList.toggle("dark");
@@ -28,21 +34,12 @@ export default function Header() {
     navigate('/')
   };
 
-  // 퍼즐 생성 카운트 조회
+  // data가 바로 puzzleCreateCount 값
   useEffect(() => {
-    const fetchPuzzleCreateCount = async () => {
-      try {
-        const response = await getPuzzleCreateCount();
-        // response에서 puzzleCreateCount 값만 추출
-        setPuzzleCreateCount(response.puzzleCreateCount);
-
-      } catch (error) {
-        console.error('퍼즐 생성 카운트 조회 실패:', error);
-      }
-    };
-    
-    fetchPuzzleCreateCount();
-  }, [isProfileMenuOpen]);
+    if (data !== undefined) {
+      setPuzzleCreateCount(data);
+    }
+  }, [data, isProfileMenuOpen]);
 
   return (
     <header className="bg-white shadow-sm fixed w-full dark:bg-slate-800 z-50">
@@ -119,7 +116,7 @@ export default function Header() {
                         퍼즐 만들기
                         </Link>
                         <div className="absolute right-2 text-xs font-bold text-gray-500 px-2 rounded-full bg-yellow-100 p-1">
-                          {puzzleCreateCount || 0} left
+                          {data || 0} left
                         </div>
                       </div>
                       {isAdmin && (
