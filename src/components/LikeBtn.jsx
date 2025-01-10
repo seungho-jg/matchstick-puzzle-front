@@ -1,3 +1,4 @@
+import { toast } from "react-hot-toast"
 import { useState, useEffect } from "react"
 import { getLikes, postLikes, removeLikes } from '../api/api-like'
 import useAuthStore from "../store/authStore"
@@ -38,7 +39,7 @@ export default function LikeButton({ puzzleId, likes: initialLikes }) {
   
   const handleLike = async () => {
     if (!token) {
-      alert('로그인이 필요합니다.')
+      toast.error('로그인이 필요합니다.')
       return
     }
     try {
@@ -53,7 +54,7 @@ export default function LikeButton({ puzzleId, likes: initialLikes }) {
       }
     } catch (error) {
         console.error('좋아요 처리 중 오류 발생:', error)
-        alert('좋아요 처리 중 문제가 발생했습니다.')
+        toast.error('좋아요 처리 중 문제가 발생했습니다.')
         // 실패 시 상태를 원래대로 되돌립니다
         setLiked(prev => !prev)
         setLikeCount(prev => liked ? prev + 1 : prev - 1)

@@ -1,3 +1,4 @@
+import { toast } from "react-hot-toast"
 import { useState, useRef, useEffect, Fragment } from 'react';
 import { Stage, Layer, Transformer, Text } from 'react-konva';
 import Matchstick from './Matchstick';
@@ -84,7 +85,7 @@ export default function CreatePuzzleCanvas() {
   
   const handleRemove = () => {
     if (limitcheck <= Object.keys(moveCounts).length) {
-      alert("제거할 수 있는 성냥개비가 없습니다.")
+      toast.error("제거할 수 있는 성냥개비가 없습니다.")
       return
     }
     if (isInitialStateConfirmed && !moveCounts[selectedMatchstick]) {
@@ -111,12 +112,12 @@ export default function CreatePuzzleCanvas() {
   // 초기 상태 확인
   const handleConfirmInitialState = () => {
     if (currentMathchstick.length === 0) {
-      alert("성냥개비가 없습니다.")
+      toast.error("성냥개비가 없습니다.")
       return
     }
 
     if (limit > currentMathchstick.length) {
-      alert("초기 상태 개수가 제한 개수보다 많습니다.")
+      toast.error("초기 상태 개수가 제한 개수보다 많습니다.")
       return
     }
 
@@ -146,7 +147,7 @@ export default function CreatePuzzleCanvas() {
   // 새로운 정답 추가 또는 변경
   const handleAddSolution = () => {
     if (Object.keys(moveCounts).length === 0) {
-      alert("이동한 성냥개비가 없습니다.")
+      toast.error("이동한 성냥개비가 없습니다.")
       return
     }
 
@@ -210,15 +211,15 @@ export default function CreatePuzzleCanvas() {
   // 퍼즐 제출
   const handleSubmit = async () => {
     if (puzzleCreateCount <= 0) {
-      alert('퍼즐 생성 횟수가 부족합니다.');
+      toast.error('퍼즐 생성 횟수가 부족합니다.');
       return;
     }
     if (title === '') {
-      alert('퍼즐 제목을 입력해주세요.');
+      toast.error('퍼즐 제목을 입력해주세요.');
       return;
     }
     if (solutions.length === 0) {
-      alert('정답이 없습니다.');
+      toast.error('정답이 없습니다.');
       return;
     }
     const puzzleData = {
@@ -237,11 +238,11 @@ export default function CreatePuzzleCanvas() {
       await createPuzzle(puzzleData);
       decreasePuzzleCount();
       invalidatePuzzles();
-      alert(`퍼즐이 성공적으로 생성되었습니다! (craft coin: ${puzzleCreateCount - 1})`);
+      toast.success(`퍼즐이 성공적으로 생성되었습니다! (craft coin: ${puzzleCreateCount - 1})`);
       navigate('/');
     } catch (error) {
       console.error('퍼즐 생성 실패:', error);
-      alert(error.message || '퍼즐 생성에 실패했습니다.');
+      toast.error(error.message || '퍼즐 생성에 실패했습니다.');
     }
   };
 

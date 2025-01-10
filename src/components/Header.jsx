@@ -1,3 +1,4 @@
+import { toast } from "react-hot-toast"
 import { Link, useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import useAuthStore from "../store/authStore"
@@ -21,7 +22,9 @@ export default function Header() {
   const handleLogout = () => {
     clearToken()
     setIsProfileMenuOpen(false)
-    alert("로그아웃 되었습니다.")
+    toast.success("로그아웃 되었습니다.", {
+      icon: '👋',
+    })
     navigate('/')
   };
 

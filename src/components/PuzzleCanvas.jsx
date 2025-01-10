@@ -1,3 +1,4 @@
+import { toast } from "react-hot-toast"
 import { useRef, useEffect, useState, Fragment } from "react"
 import { Stage, Layer, Transformer, Text } from "react-konva"
 import Matchstick from "./Matchstick"
@@ -170,7 +171,7 @@ useEffect(() => {
   const handleDragEnd = (e, id) => {
     // 드래그 완료 후 위치 업데이트
     if (gameType === "remove") {
-      alert("현재 상태에서는 이동이 불가능합니다.");
+      toast.error("현재 상태에서는 이동이 불가능합니다.");
       return;
     }
     // 정수로 반올림
@@ -184,7 +185,7 @@ useEffect(() => {
     // 이동 제한 확인
     if (currentMoveCount >= limit) {
       if (!moveCounts[id]){
-        alert('이동 제한에 도달했습니다.')
+        toast.error('이동 제한에 도달했습니다.')
         restorePreviousPosition(id)
         return;
       }
@@ -210,7 +211,7 @@ useEffect(() => {
     // 이동 제한 확인
     if (currentMoveCount >= limit) {
       if (!moveCounts[id]){
-        alert('이동 제한에 도달했습니다.')
+        toast.error('이동 제한에 도달했습니다.')
         restorePreviousPosition(id)
         return;
       }
@@ -321,11 +322,11 @@ useEffect(() => {
 
   const handleRemove = () => {
     if (gameType !== "remove") {
-      alert("삭제할 수 없습니다.")
+      toast.error("삭제할 수 없습니다.")
       return
     }
     if (Object.keys(moveCounts).length >= limit) {
-      alert("삭제 제한을 초과했습니다.")
+      toast.error("삭제 제한을 초과했습니다.")
       return
     }
     if (selectedMatchstick) {
@@ -388,7 +389,7 @@ useEffect(() => {
       if (result.levelUp) {
         const response = await getPuzzleCreateCount();
         setPuzzleCreateCount(response.puzzleCreateCount);
-        alert(`축하합니다! 레벨 ${result.newLevel}이 되었습니다!`);
+        toast.success(`축하합니다! 레벨 ${result.newLevel}이 되었습니다!`);
       }
     } catch (error) {
       console.error('Error checking answer:', error);
@@ -458,9 +459,9 @@ useEffect(() => {
     try {
       await deletePuzzleAdmin(puzzleData.id);
       navigate('/puzzle'); // 퍼즐 목록으로 이동
-      alert('퍼즐이 삭제되었습니다.');
+      toast.success('퍼즐이 삭제되었습니다.');
     } catch (error) {
-      alert(error.message || '퍼즐 삭제에 실패했습니다.');
+      toast.error(error.message || '퍼즐 삭제에 실패했습니다.');
     }
   };
 

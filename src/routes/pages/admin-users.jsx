@@ -1,3 +1,4 @@
+import { toast } from "react-hot-toast"
 import { useState } from "react"
 import { addCreateCredit, makeRole, searchUsers } from "../../api/api-admin"
 
@@ -31,14 +32,16 @@ export default function AdminUsers() {
         throw new Error('사용자를 선택해주세요.');
       }
       await addCreateCredit(userId, amount);
-      alert('생성크래딧이 추가되었습니다.');
+      toast('생성크래딧이 추가되었습니다.',{
+        icon: '🎉',
+      });
       if (searchQuery) {
         const result = await searchUsers(searchQuery.trim());
         setUsers(result);
       }
     } catch (error) {
       console.error('생성크래딧 추가 실패:', error);
-      alert(error.message);
+      toast.error(error.message);
     }
   };
 

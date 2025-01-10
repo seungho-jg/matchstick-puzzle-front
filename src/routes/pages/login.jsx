@@ -1,13 +1,16 @@
-import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast"
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from "react-hook-form";
 import { loginSchema } from '../../validationSchemas';
 import { fetchLogin } from '../../api/api-auth';
 import useAuthStore from '../../store/authStore';
 import { getPuzzleCreateCount } from "../../api/api-user";
+import { useEffect } from "react";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(loginSchema),
   });
@@ -24,10 +27,19 @@ export default function LoginPage() {
       const res = await getPuzzleCreateCount();
       setPuzzleCreateCount(res.puzzleCreateCount);
       navigate('/');
+      toast.success('로그인 성공!');
     } catch (error) {
-      alert(error.message || '로그인에 실패했습니다.');
+      toast.error(error.message || '로그인에 실패했습니다.');
     }
   };
+  useEffect(() => {
+    // URL에서 verified 파라미터 확인
+    if (searchParams.get('verified') === 'true') {
+      toast.success('이메일 인증이 완료되었습니다. 로그인해주세요.', {
+        duration: 4000,
+      });
+    }
+  }, []);
 
   return (
     <div className="flex items-center justify-center bg-gray-50">

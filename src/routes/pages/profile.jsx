@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { deletePuzzle } from "../../api/api-puzzle";
 import SkinSelector from "../../components/SkinSelector";
 import { useInvalidatePuzzles } from '../../hooks/usePuzzle';
+import toast from 'react-hot-toast';
 // 다음 레벨까지 필요한 경험치 계산
 
 export default function Profile() {
@@ -13,6 +14,7 @@ export default function Profile() {
   const [userInfo, setUserInfo] = useState(null);
   const [requiredExp, setRequiredExp] = useState(100);
   const { invalidatePuzzles } = useInvalidatePuzzles();
+  const [createdPuzzles, setCreatedPuzzles] = useState([])
 
   useEffect(() => {
     const username = outletData?.username
@@ -30,24 +32,48 @@ export default function Profile() {
         const nextLevelExp = Math.floor(100 * Math.pow(1.2, userInfo.user.level));
         setRequiredExp(nextLevelExp);
       }
+      setCreatedPuzzles(userInfo?.created)
     }
     getUserInfo()
   }, [userInfo?.user?.level])
 
     const handleDeletePuzzle = async (e, puzzleId) => {
-      
       e.preventDefault()
-      if (window.confirm('정말로 이 퍼즐을 삭제하시겠습니까?')) {
-        try {
-          await deletePuzzle(puzzleId);
-          invalidatePuzzles();
-          // 삭제 후 유저 정보 새로고침
-          const updatedUserInfo = await fetchUserInfo();
-          setUserInfo(updatedUserInfo);
-        } catch (error) {
-          alert('퍼즐 삭제에 실패했습니다.');
-        }
-      }
+      toast((t) => (
+        <div className="flex flex-col gap-2">
+          <span>정말로 이 퍼즐을 삭제하시겠습니까?</span>
+          <div className="flex justify-end gap-2">
+            <button
+              className="px-3 py-1 text-sm bg-gray-200 rounded-md hover:bg-gray-300"
+              onClick={() => toast.dismiss(t.id)}
+            >
+              취소
+            </button>
+            <button
+              className="px-3 py-1 text-sm bg-rose-500 text-white rounded-md hover:bg-rose-600"
+              onClick={async () => {
+                toast.dismiss(t.id);
+                try {
+                  await deletePuzzle(puzzleId);
+                  setCreatedPuzzles(prevPuzzles => 
+                    prevPuzzles.filter(puzzle => puzzle.id !== puzzleId)
+                  );
+                  toast.success('퍼즐이 삭제되었습니다.');
+                  // 퍼즐 목록 새로고침 로직
+                  invalidatePuzzles()
+                } catch (error) {
+                  toast.error('퍼즐 삭제에 실패했습니다.');
+                }
+              }}
+            >
+              삭제
+            </button>
+          </div>
+        </div>
+      ), {
+        duration: 5000,  // 5초 동안 표시
+        position: 'top-center',
+      });
     };
   return (
     <div className="space-y-8">
@@ -108,7 +134,7 @@ export default function Profile() {
         <div>
           <h2 className="text-md  font-bold mb-4">제작한 문제 ( {userInfo?.stats.totalCreated} )</h2>
           <div className="grid gap-4">
-            {userInfo?.created.map((puzzle) => (
+            {createdPuzzles.map((puzzle) => (
               <Link 
                 to={`/puzzle/${puzzle.id}`}
                 key={puzzle.id} 
