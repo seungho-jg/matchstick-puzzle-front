@@ -10,5 +10,5 @@ React로 만든 성냥개비 퍼즐 사이트입니다. <a href="https://matchst
 # 기술 스택
 React18, Konva.js, zustand, tanstack-query, tailwindCSS, Zod
 <br>
-<img src="[/uploads/1848994ad25765da30fa8ef3684c67bc/캡처.PNG](https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FbjVFEe%2FbtsLEqF8SwC%2FRkXLkHjSD3DJOeDta2ozA1%2Fimg.png)"  width="700" height="370">
+<img src="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FbjVFEe%2FbtsLEqF8SwC%2FRkXLkHjSD3DJOeDta2ozA1%2Fimg.png"  width="700" height="370">
 
